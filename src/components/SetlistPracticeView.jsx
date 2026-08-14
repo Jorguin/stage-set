@@ -1,0 +1,325 @@
+import { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
+import { ArrowLeft, Settings, X, CheckSquare, Target, ChevronLeft, ChevronRight, Play, ListMusic, Music } from 'lucide-react';
+
+export default function SetlistPracticeView() {
+  const { id } = useParams(); // event/setlist id
+  const navigate = useNavigate();
+  const [event, setEvent] = useState(null);
+  const [songs, setSongs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentSongIndex, setCurrentSongIndex] = useState(0);
+  const [practiceMode, setPracticeMode] = useState(false); // false = overview, true = practicing current song
+  const [showSettings, setShowSettings] = useState(false);
+  const [fontSize, setFontSize] = useState(18);
+  const [highContrast, setHighContrast] = useState(false);
+
+  const currentSong = songs[currentSongIndex];
+
+  // Fetch setlist/event with songs
+  useEffect(() => {
+    async function fetchSetlist() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: eventData, error: eventError } = await supabase
+          .from('events')
+          .select(`
+            *,
+            setlist_songs (
+              sort_order,
+              songs (*)
+            )
+          `)
+          .eq('id', id)
+          .single();
+
+        if (eventError) throw eventError;
+
+        const orderedSongs = eventData.setlist_songs
+          ?.sort((a, b) => a.sort_order - b.sort_order)
+          .map(s => s.songs)
+          .filter(Boolean) || [];
+
+        setEvent(eventData);
+        setSongs(orderedSongs);
+      } catch (error) {
+        console.error('Error fetching setlist:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (id) fetchSetlist();
+  }, [id]);
+
+  const goToSong = useCallback((index) => {
+    if (index >= 0 && index < songs.length) {
+      setCurrentSongIndex(index);
+      setPracticeMode(false);
+    }
+  }, [songs]);
+
+  const nextSong = useCallback(() => {
+    if (currentSongIndex < songs.length - 1) {
+      setCurrentSongIndex(prev => prev + 1);
+      setPracticeMode(false);
+    }
+  }, [songs.length, currentSongIndex]);
+
+  const prevSong = useCallback(() => {
+    if (currentSongIndex > 0) {
+      setCurrentSongIndex(prev => prev - 1);
+      setPracticeMode(false);
+    }
+  }, [currentSongIndex]);
+
+  const startPractice = useCallback(() => {
+    if (currentSong) {
+      setPracticeMode(true);
+    }
+  }, [currentSong]);
+
+  if (loading) return <div className="h-screen bg-stage flex items-center justify-center text-white font-mono">Cargando setlist...</div>;
+  if (!event) return <div className="h-screen bg-stage flex items-center justify-center text-white font-mono">Setlist no encontrado.</div>;
+
+  return (
+    <div className={`h-screen flex flex-col bg-stage text-white overflow-hidden relative font-mono ${highContrast ? 'high-contrast' : ''}`} style={{ '--stage-font-size': `${fontSize}px` }}>
+      {/* Header */}
+      <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-stage to-transparent z-20 flex flex-col md:flex-row md:items-center justify-between gap-3 pointer-events-none">
+        <div className="flex items-center gap-2 pointer-events-auto">
+          <button 
+            onClick={() => navigate('/')}
+            className="w-12 h-12 flex items-center justify-center bg-panel rounded-full text-white hover:text-amber-400 transition-colors shadow-lg"
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <div className="bg-panel px-4 py-2 rounded-full font-bold text-lg pointer-events-auto shadow-lg flex flex-col items-center min-w-[200px]">
+            <ListMusic size={20} className="text-amber-400 mb-1" />
+            {event.title}
+            <p className="text-xs text-gray-400">{songs.length} canciones</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 pointer-events-auto md:order-2">
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className="w-12 h-12 flex items-center justify-center bg-panel rounded-full text-white hover:text-amber-400 transition-colors shadow-lg"
+            title="Ajustes (Esc para cerrar)"
+          >
+            <Settings size={24} />
+          </button>
+        </div>
+      </div>
+
+      {/* Settings Panel */}
+      {showSettings && (
+        <div className="absolute top-28 left-4 right-4 md:left-auto md:right-4 md:w-80 bg-panel rounded-2xl shadow-2xl border border-gray-700 p-4 z-30 pointer-events-auto animate-slide-down">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-white">Ajustes</h3>
+            <button onClick={() => setShowSettings(false)} className="text-gray-400 hover:text-white"><X size={20} /></button>
+          </div>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="flex items-center justify-between text-sm mb-2">
+                <span className="text-gray-300">Tamaño fuente</span>
+                <span className="text-white font-mono">{fontSize}px</span>
+              </label>
+              <input
+                type="range"
+                min="12"
+                max="32"
+                value={fontSize}
+                onChange={(e) => setFontSize(Number(e.target.value))}
+                className="w-full h-2 bg-gray-800 rounded-lg appearance-none accent-amber-400 cursor-pointer"
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-gray-300 truncate">Alto contraste</p>
+                <p className="text-xs text-gray-500 truncate">Para escenarios con luces fuertes</p>
+              </div>
+              <button
+                onClick={() => setHighContrast(!highContrast)}
+                className={`relative w-16 h-9 rounded-full transition-colors flex-shrink-0 ${highContrast ? 'bg-amber-400' : 'bg-gray-700'}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 transition-transform duration-200 ${highContrast ? 'translate-x-7' : 'translate-x-0'} w-8 h-8 bg-white rounded-full shadow-md`} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!practiceMode ? (
+        /* Setlist Overview */
+        <div className="flex-1 overflow-y-auto pt-28 pb-24 px-4 md:px-12 lg:px-24">
+          <div className="max-w-4xl mx-auto space-y-4">
+            {/* Progress Summary */}
+            <div className="bg-panel rounded-2xl p-6 border border-gray-800">
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <Target className="text-amber-400" />
+                Progreso del Setlist
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-gray-800 rounded-xl p-4 text-center">
+                  <p className="text-3xl font-bold text-amber-400">{songs.filter((_, i) => i < currentSongIndex).length}</p>
+                  <p className="text-xs text-gray-400">Completadas</p>
+                </div>
+                <div className="bg-gray-800 rounded-xl p-4 text-center">
+                  <p className="text-3xl font-bold text-white">{currentSongIndex < songs.length ? 1 : 0}</p>
+                  <p className="text-xs text-gray-400">En progreso</p>
+                </div>
+                <div className="bg-gray-800 rounded-xl p-4 text-center">
+                  <p className="text-3xl font-bold text-gray-400">{songs.length - currentSongIndex - 1}</p>
+                  <p className="text-xs text-gray-400">Pendientes</p>
+                </div>
+              </div>
+              <div className="mt-4 h-2 bg-gray-800 rounded-full overflow-hidden">
+                <div className="h-full bg-amber-400 transition-all duration-500" style={{ width: `${((currentSongIndex) / songs.length) * 100}%` }} />
+              </div>
+            </div>
+
+            {/* Song List */}
+            <div className="space-y-2">
+              {songs.map((song, idx) => (
+                <button
+                  key={song.id}
+                  onClick={() => goToSong(idx)}
+                  disabled={idx > currentSongIndex}
+                  className={`w-full text-left p-4 rounded-xl transition-all border-2 flex items-center gap-4 ${
+                    idx < currentSongIndex
+                      ? 'bg-green-900/30 border-green-500'
+                      : idx === currentSongIndex
+                        ? 'bg-amber-900/30 border-amber-500 ring-2 ring-amber-500/20'
+                        : 'bg-gray-800/50 border-gray-700 opacity-60'
+                  }`}
+                >
+                  <div className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${
+                    idx < currentSongIndex ? 'bg-green-500' : idx === currentSongIndex ? 'bg-amber-500' : 'bg-gray-700'
+                  }">
+                    {idx < currentSongIndex ? (
+                      <CheckSquare size={24} className="text-white" />
+                    ) : idx === currentSongIndex ? (
+                      <Play size={24} className="text-white ml-1" />
+                    ) : (
+                      <Music size={24} className="text-gray-400" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-white truncate">{song.title}</p>
+                    <p className="text-xs text-gray-400">{idx + 1} de {songs.length}</p>
+                  </div>
+                  {idx === currentSongIndex && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); startPractice(); }}
+                      className="flex-shrink-0 px-6 py-2 bg-amber-400 text-black rounded-xl font-bold hover:bg-amber-500 transition-colors"
+                    >
+                      <Target size={16} className="mr-1" />
+                      Practicar
+                    </button>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Practicing Current Song - Redirect to PracticeView */
+        <>
+          <div className="flex-1 flex items-center justify-center pt-28">
+            <div className="bg-panel rounded-2xl p-8 max-w-md w-full mx-4 border border-gray-800 text-center">
+              <div className="w-20 h-20 mx-auto mb-4 bg-amber-100 rounded-full flex items-center justify-center">
+                <Play size={40} className="text-amber-600 ml-2" />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2">{currentSong?.title}</h2>
+              <p className="text-gray-400 mb-6">Canción {currentSongIndex + 1} de {songs.length}</p>
+              <button
+                onClick={() => navigate(`/practice/${currentSong?.id}?fromSetlist=${id}&songIndex=${currentSongIndex}`)}
+                className="w-full py-4 bg-amber-400 text-black rounded-xl font-bold text-lg hover:bg-amber-500 transition-colors shadow-[0_0_15px_rgba(251,191,36,0.3)]"
+              >
+                <Target size={20} className="mr-2" />
+                Abrir en Modo Práctica
+              </button>
+              <button
+                onClick={() => { setPracticeMode(false); }}
+                className="w-full mt-4 py-3 bg-gray-800 text-white rounded-xl font-medium hover:bg-gray-700 transition-colors"
+              >
+                Volver al Setlist
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Bottom Navigation (only in overview mode) */}
+      {!practiceMode && (
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-panel p-4 rounded-3xl shadow-2xl border border-gray-800 z-20">
+          <button
+            onClick={prevSong}
+            disabled={currentSongIndex === 0}
+            className="w-12 h-12 flex items-center justify-center rounded-xl hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Canción anterior"
+          >
+            <ChevronLeft size={24} />
+          </button>
+          <div className="flex flex-col items-center justify-center w-20 font-bold">
+            <span className="text-xs text-gray-500 uppercase">Canción</span>
+            <span className="text-white text-lg">{currentSongIndex + 1} / {songs.length}</span>
+          </div>
+          <button
+            onClick={nextSong}
+            disabled={currentSongIndex >= songs.length - 1}
+            className="w-12 h-12 flex items-center justify-center rounded-xl hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Siguiente canción"
+          >
+            <ChevronRight size={24} />
+          </button>
+        </div>
+      )}
+
+      {/* Settings Panel */}
+      {showSettings && (
+        <div className="absolute top-28 left-4 right-4 md:left-auto md:right-4 md:w-80 bg-panel rounded-2xl shadow-2xl border border-gray-700 p-4 z-30 pointer-events-auto animate-slide-down">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-white">Ajustes</h3>
+            <button onClick={() => setShowSettings(false)} className="text-gray-400 hover:text-white"><X size={20} /></button>
+          </div>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="flex items-center justify-between text-sm mb-2">
+                <span className="text-gray-300">Tamaño fuente</span>
+                <span className="text-white font-mono">{fontSize}px</span>
+              </label>
+              <input
+                type="range"
+                min="12"
+                max="32"
+                value={fontSize}
+                onChange={(e) => setFontSize(Number(e.target.value))}
+                className="w-full h-2 bg-gray-800 rounded-lg appearance-none accent-amber-400 cursor-pointer"
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-gray-300 truncate">Alto contraste</p>
+                <p className="text-xs text-gray-500 truncate">Para escenarios con luces fuertes</p>
+              </div>
+              <button
+                onClick={() => setHighContrast(!highContrast)}
+                className={`relative w-16 h-9 rounded-full transition-colors flex-shrink-0 ${highContrast ? 'bg-amber-400' : 'bg-gray-700'}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 transition-transform duration-200 ${highContrast ? 'translate-x-7' : 'translate-x-0'} w-8 h-8 bg-white rounded-full shadow-md`} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

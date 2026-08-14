@@ -1,0 +1,219 @@
+@import "tailwindcss";
+
+@theme {
+  --color-stage: #08080A;
+  --color-panel: #121216;
+  --color-amber-400: #fbbf24;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-stage);
+    color: #f3f4f6;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* High Contrast Mode */
+.high-contrast {
+  --color-stage: #000000;
+  --color-panel: #000000;
+  --color-amber-400: #FFFF00;
+}
+
+.high-contrast body {
+  background-color: #000;
+  color: #FFF;
+}
+
+.high-contrast .bg-stage {
+  background-color: #000 !important;
+}
+
+.high-contrast .bg-panel {
+  background-color: #000 !important;
+  border-color: #FFF !important;
+}
+
+.high-contrast .bg-gray-800,
+.high-contrast .bg-gray-700,
+.high-contrast .bg-gray-600 {
+  background-color: #111 !important;
+}
+
+.high-contrast .text-gray-300,
+.high-contrast .text-gray-400,
+.high-contrast .text-gray-500 {
+  color: #CCC !important;
+}
+
+.high-contrast .border-gray-700,
+.high-contrast .border-gray-800 {
+  border-color: #333 !important;
+}
+
+.high-contrast .hover\:bg-gray-700:hover {
+  background-color: #222 !important;
+}
+
+.high-contrast .hover\:text-amber-400:hover {
+  color: #FF0 !important;
+}
+
+.high-contrast .text-amber-400 {
+  color: #FF0 !important;
+}
+
+.high-contrast .bg-amber-400 {
+  background-color: #FF0 !important;
+  color: #000 !important;
+}
+
+.high-contrast .hover\:bg-amber-500:hover {
+  background-color: #CC0 !important;
+}
+
+.high-contrast .shadow-\[0_0_15px_rgba\(251\,191\,36\,0\.3\)\],
+.high-contrast .shadow-\[0_0_15px_rgba\(251\,191\,36\,0\.2\)\],
+.high-contrast .shadow-\[0_0_20px_rgba\(251\,191\,36\,0\.15\)\],
+.high-contrast .shadow-\[0_0_25px_rgba\(251\,191\,36\,0\.4\)\] {
+  box-shadow: 0 0 15px #FF0 !important;
+}
+
+.high-contrast .shadow-\[0_0_15px_rgba\(239\,68\,68\,0\.4\)\] {
+  box-shadow: 0 0 15px #F00 !important;
+}
+
+.high-contrast input[type="range"]::-webkit-slider-thumb {
+  background: #FF0 !important;
+}
+
+.high-contrast input[type="range"]::-moz-range-thumb {
+  background: #FF0 !important;
+}
+
+/* Metronome animation */
+.metronome-bar {
+  overflow: hidden;
+}
+
+.metronome-flash {
+  animation: metronomePulse 0.1s ease-out forwards;
+}
+
+@keyframes metronomePulse {
+  0% { transform: scaleX(0); }
+  100% { transform: scaleX(1); }
+}
+
+@keyframes metronomeFlashPulse {
+  0% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0; }
+}
+
+.animate-metronome-flash {
+  animation: metronomeFlashPulse 0.15s ease-out forwards;
+}
+
+/* Settings panel animation */
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-down {
+  animation: slideDown 0.2s ease-out;
+}
+
+/* Section marker highlight */
+.section-marker {
+  position: relative;
+}
+
+.section-marker::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  background: #fbbf24;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.section-marker:hover::before {
+  opacity: 1;
+}
+
+/* Focus visible for accessibility */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid #fbbf24;
+  outline-offset: 2px;
+}
+
+.high-contrast button:focus-visible,
+.high-contrast a:focus-visible,
+.high-contrast input:focus-visible,
+.high-contrast select:focus-visible {
+  outline-color: #FF0;
+}
+
+/* Range input styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  background: #1f2937;
+  border-radius: 3px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: #fbbf24;
+  border-radius: 50%;
+  margin-top: -6px;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 10px #fbbf24;
+}
+
+input[type="range"]::-moz-range-track {
+  height: 6px;
+  background: #1f2937;
+  border-radius: 3px;
+  border: none;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: #fbbf24;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+}
+
+input[type="range"]:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid #fbbf24;
+  outline-offset: 2px;
+}
