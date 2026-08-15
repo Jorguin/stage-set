@@ -24,7 +24,6 @@ export default function StageViewer() {
 
   // Section markers
   const [sections, setSections] = useState([]);
-  const [activeSectionIndex, setActiveSectionIndex] = useState(-1);
 
   // Visual metronome
   const [showMetronome, setShowMetronome] = useState(false);
@@ -684,37 +683,39 @@ export default function StageViewer() {
       {/* Contenido (con ref para scroll) */}
       <div 
         ref={scrollRef}
-        className="flex-1 overflow-y-auto pt-32 md:pt-48 pb-20 md:pb-64 px-4 md:px-12 lg:px-24"
+        className="flex-1 overflow-y-auto pt-24 md:pt-32 lg:pt-40 pb-20 md:pb-40 lg:pb-64 px-3 md:px-4 lg:px-6 safe-area-bottom"
         style={{ scrollBehavior: isScrolling ? 'auto' : 'smooth' }}
       >
-        <div className="max-w-4xl mx-auto space-y-6 min-h-[calc(100vh+100px)]">
+        <div className="w-full mx-auto space-y-4 min-h-[calc(100vh+100px)] px-2 md:px-0">
           {lines.map((line, lineIndex) => {
             const parsed = parseLine(line, semitones);
             
             if (parsed.length === 1 && parsed[0].chord === '' && parsed[0].text.trim() === '') {
-              return <div key={lineIndex} className="h-6" data-line-index={lineIndex}></div>;
+              return <div key={lineIndex} className="h-4" data-line-index={lineIndex}></div>;
             }
 
             const isSection = sections.some(s => s.lineIndex === lineIndex);
 
             return (
-              <div key={lineIndex} className={`flex flex-wrap relative mb-8 leading-relaxed ${isSection ? 'section-marker' : ''}`} data-line-index={lineIndex}>
+              <div key={lineIndex} className={`relative mb-6 leading-relaxed ${isSection ? 'section-marker' : ''}`} data-line-index={lineIndex}>
                 {isSection && (
-                  <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-3 h-3 bg-amber-400 rounded-full hidden md:block" />
+                  <div className="absolute -left-3 md:-left-4 top-1/2 -translate-y-1/2 w-2.5 md:w-3 h-2.5 md:h-3 bg-amber-400 rounded-full hidden sm:block" />
                 )}
-                {parsed.map((part, partIndex) => (
-                  <div key={partIndex} className="inline-flex flex-col relative mr-1 min-w-[0.5rem]">
-                    {/* RF2.1 Alineación Monoespaciada y Anclaje Vertical */}
-                    {part.chord && (
-                      <span className="text-amber-400 font-bold absolute -top-6 left-0 whitespace-nowrap text-lg">
-                        {part.chord}
+                <div className="chord-line-mobile relative">
+                  {parsed.map((part, partIndex) => (
+                    <span key={partIndex} className="relative inline-block">
+                      {/* RF2.1 Alineación Monoespaciada y Anclaje Vertical */}
+                      {part.chord && (
+                        <span className="text-amber-400 font-bold absolute -top-5 md:-top-6 left-0 whitespace-nowrap text-sm md:text-lg chord-mobile">
+                          {part.chord}
+                        </span>
+                      )}
+                      <span className="whitespace-pre-wrap block chord-line-mobile" style={{ fontSize: 'var(--stage-font-size, 16px)' }}>
+                        {part.text || '\u00A0'}
                       </span>
-                    )}
-                    <span className="text-xl whitespace-pre" style={{ fontSize: 'var(--stage-font-size, 16px)' }}>
-                      {part.text || ' '}
                     </span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             );
           })}
@@ -722,38 +723,38 @@ export default function StageViewer() {
       </div>
 
       {/* Controles Flotantes Inferiores - Responsive & Collapsible */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
+      <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 z-20 w-full px-2 md:px-0 max-w-[90vw] md:max-w-none">
         {/* Collapsed state - just play/pause + expand */}
         {(!showBottomControls || isMobile) && (
-          <div className="flex items-center gap-3 bg-panel/95 backdrop-blur-sm p-3 rounded-2xl shadow-2xl border border-gray-800 animate-slide-up">
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 bg-panel/95 backdrop-blur-sm p-2 sm:p-3 rounded-2xl shadow-2xl border border-gray-800 animate-slide-up w-full max-w-[90vw] sm:max-w-none mx-auto">
             {/* Transpose - compact */}
-            <div className="flex items-center gap-1 bg-[#1A1A20] p-1 rounded-xl">
-              <button onClick={() => setSemitones(s => s - 1)} className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-700 transition-colors" title="-1 Semitono"><Minus size={20} /></button>
-              <span className={`w-10 text-center font-bold ${semitones !== 0 ? 'text-amber-400' : 'text-white'}`}>{semitones > 0 ? `+${semitones}` : semitones}</span>
-              <button onClick={() => setSemitones(s => s + 1)} className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-700 transition-colors" title="+1 Semitono"><Plus size={20} /></button>
-              <button onClick={() => setSemitones(0)} className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-700 transition-colors text-gray-400" title="Reset"><RefreshCw size={18} /></button>
+            <div className="flex items-center gap-1 bg-[#1A1A20] p-1 rounded-xl flex-shrink-0">
+              <button onClick={() => setSemitones(s => s - 1)} className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-lg hover:bg-gray-700 transition-colors" title="-1 Semitono"><Minus size={18} /></button>
+              <span className={`w-9 sm:w-10 text-center font-bold ${semitones !== 0 ? 'text-amber-400' : 'text-white'}`}>{semitones > 0 ? `+${semitones}` : semitones}</span>
+              <button onClick={() => setSemitones(s => s + 1)} className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-lg hover:bg-gray-700 transition-colors" title="+1 Semitono"><Plus size={18} /></button>
+              <button onClick={() => setSemitones(0)} className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-lg hover:bg-gray-700 transition-colors text-gray-400" title="Reset"><RefreshCw size={16} /></button>
             </div>
 
             {/* Play/Pause - main action */}
             <button
               onClick={toggleScroll}
-              className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${
+              className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center transition-all flex-shrink-0 ${
                 isScrolling ? 'bg-red-500 text-white hover:bg-red-600 shadow-[0_0_15px_rgba(239,68,68,0.4)]' : 'bg-amber-400 text-black hover:bg-amber-500 shadow-[0_0_15px_rgba(251,191,36,0.3)]'
               }`}
             >
-              {isScrolling ? <Pause size={28} /> : <Play size={28} className="ml-1" />}
+              {isScrolling ? <Pause size={24} /> : <Play size={24} className="ml-1" />}
             </button>
 
             {/* Expand button / Continuous mode indicator */}
             {continuousMode && setlistSongs.length > 0 ? (
-              <span className="text-xs font-mono text-gray-400 px-2 w-10 text-center">{currentSongIndex + 1}/{setlistSongs.length}</span>
+              <span className="text-xs sm:text-xs font-mono text-gray-400 px-2 w-auto min-w-[3rem] text-center">{currentSongIndex + 1}/{setlistSongs.length}</span>
             ) : (
               <button
                 onClick={() => setShowBottomControls(true)}
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#1A1A20] text-gray-400 hover:bg-gray-700 transition-colors"
+                className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-[#1A1A20] text-gray-400 hover:bg-gray-700 transition-colors flex-shrink-0"
                 title="Más controles"
               >
-                <ChevronUp size={24} />
+                <ChevronUp size={20} />
               </button>
             )}
           </div>
@@ -761,65 +762,65 @@ export default function StageViewer() {
 
         {/* Expanded state - full controls */}
         {showBottomControls && !isMobile && (
-          <div className="flex flex-col md:flex-row items-center gap-4 bg-panel/95 backdrop-blur-sm p-4 rounded-3xl shadow-2xl border border-gray-800 animate-slide-up md:min-w-[600px]">
+          <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 bg-panel/95 backdrop-blur-sm p-3 sm:p-4 rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-800 animate-slide-up w-full max-w-[95vw] mx-auto">
             
             {/* Transpose Controls */}
-            <div className="flex items-center gap-2 bg-[#1A1A20] p-1 rounded-2xl flex-wrap justify-center">
-              <button onClick={() => setSemitones(s => s - 1)} className="w-12 h-12 flex items-center justify-center rounded-xl hover:bg-gray-700 transition-colors" title="-1 Semitono"><Minus size={24} /></button>
-              <div className="flex flex-col items-center justify-center w-14 font-bold">
-                <span className="text-xs text-gray-500 uppercase">Tono</span>
-                <span className={semitones !== 0 ? 'text-amber-400 text-lg' : 'text-white text-lg'}>{semitones > 0 ? `+${semitones}` : semitones}</span>
+            <div className="flex items-center gap-1 sm:gap-2 bg-[#1A1A20] p-1 rounded-xl sm:rounded-2xl flex-wrap justify-center flex-shrink-0">
+              <button onClick={() => setSemitones(s => s - 1)} className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-lg hover:bg-gray-700 transition-colors" title="-1 Semitono"><Minus size={20} /></button>
+              <div className="flex flex-col items-center justify-center w-10 sm:w-14 font-bold">
+                <span className="text-[10px] sm:text-xs text-gray-500 uppercase">Tono</span>
+                <span className={semitones !== 0 ? 'text-amber-400 text-base sm:text-lg' : 'text-white text-base sm:text-lg'}>{semitones > 0 ? `+${semitones}` : semitones}</span>
               </div>
-              <button onClick={() => setSemitones(s => s + 1)} className="w-12 h-12 flex items-center justify-center rounded-xl hover:bg-gray-700 transition-colors" title="+1 Semitono"><Plus size={24} /></button>
-              <button onClick={() => setSemitones(0)} className="w-12 h-12 flex items-center justify-center rounded-xl hover:bg-gray-700 transition-colors text-gray-400" title="Tono Original"><RefreshCw size={20} /></button>
+              <button onClick={() => setSemitones(s => s + 1)} className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-lg hover:bg-gray-700 transition-colors" title="+1 Semitono"><Plus size={20} /></button>
+              <button onClick={() => setSemitones(0)} className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-lg hover:bg-gray-700 transition-colors text-gray-400" title="Tono Original"><RefreshCw size={18} /></button>
             </div>
 
-            <div className="w-px h-12 bg-gray-700 hidden md:block"></div>
-            <div className="h-px w-12 bg-gray-700 md:hidden"></div>
+            <div className="w-px h-10 sm:h-12 bg-gray-700 hidden sm:block"></div>
+            <div className="h-px w-10 bg-gray-700 sm:hidden"></div>
 
             {/* Play/Pause */}
             <button
               onClick={toggleScroll}
-              className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all ${
+              className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center transition-all flex-shrink-0 ${
                 isScrolling ? 'bg-red-500 text-white hover:bg-red-600 shadow-[0_0_15px_rgba(239,68,68,0.4)]' : 'bg-amber-400 text-black hover:bg-amber-500 shadow-[0_0_15px_rgba(251,191,36,0.3)]'
               }`}
             >
-              {isScrolling ? <Pause size={32} /> : <Play size={32} className="ml-1" />}
+              {isScrolling ? <Pause size={28} /> : <Play size={28} className="ml-1" />}
             </button>
 
-            <div className="w-px h-12 bg-gray-700 hidden md:block"></div>
-            <div className="h-px w-12 bg-gray-700 md:hidden"></div>
+            <div className="w-px h-10 sm:h-12 bg-gray-700 hidden sm:block"></div>
+            <div className="h-px w-10 bg-gray-700 sm:hidden"></div>
 
             {/* Continuous mode navigation */}
             {continuousMode && setlistSongs.length > 0 && (
-              <div className="flex items-center gap-2">
-                <button onClick={() => currentSongIndex > 0 && navigate(`/stage/${setlistSongs[currentSongIndex - 1].id}`)} disabled={currentSongIndex === 0} className="w-12 h-12 flex items-center justify-center bg-[#1A1A20] rounded-xl hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Canción anterior"><SkipBack size={24} /></button>
-                <span className="text-xs font-mono text-gray-400 px-2">{currentSongIndex + 1} / {setlistSongs.length}</span>
-                <button onClick={() => currentSongIndex < setlistSongs.length - 1 && navigate(`/stage/${setlistSongs[currentSongIndex + 1].id}`)} disabled={currentSongIndex === setlistSongs.length - 1} className="w-12 h-12 flex items-center justify-center bg-[#1A1A20] rounded-xl hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Siguiente canción"><SkipForward size={24} /></button>
+              <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                <button onClick={() => currentSongIndex > 0 && navigate(`/stage/${setlistSongs[currentSongIndex - 1].id}`)} disabled={currentSongIndex === 0} className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-[#1A1A20] rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Canción anterior"><SkipBack size={20} /></button>
+                <span className="text-[10px] sm:text-xs font-mono text-gray-400 px-1 sm:px-2 min-w-[2.5rem] text-center">{currentSongIndex + 1} / {setlistSongs.length}</span>
+                <button onClick={() => currentSongIndex < setlistSongs.length - 1 && navigate(`/stage/${setlistSongs[currentSongIndex + 1].id}`)} disabled={currentSongIndex === setlistSongs.length - 1} className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-[#1A1A20] rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Siguiente canción"><SkipForward size={20} /></button>
               </div>
             )}
 
-            <div className="w-px h-12 bg-gray-700 hidden md:block"></div>
-            <div className="h-px w-12 bg-gray-700 md:hidden"></div>
+            <div className="w-px h-10 sm:h-12 bg-gray-700 hidden sm:block"></div>
+            <div className="h-px w-10 bg-gray-700 sm:hidden"></div>
 
             {/* Section Navigation */}
             {totalSections > 1 && (
-              <div className="flex items-center gap-2">
-                <button onClick={prevSection} disabled={currentSectionIndex === 0} className="w-12 h-12 flex items-center justify-center bg-[#1A1A20] rounded-xl hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Sección anterior"><SkipBack size={24} /></button>
-                <span className="text-xs font-mono text-gray-400 px-2">{currentSectionIndex + 1} / {totalSections}</span>
-                <button onClick={nextSection} disabled={currentSectionIndex >= totalSections - 1} className="w-12 h-12 flex items-center justify-center bg-[#1A1A20] rounded-xl hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Siguiente sección"><SkipForward size={24} /></button>
+              <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                <button onClick={prevSection} disabled={currentSectionIndex === 0} className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-[#1A1A20] rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Sección anterior"><SkipBack size={20} /></button>
+                <span className="text-[10px] sm:text-xs font-mono text-gray-400 px-1 sm:px-2 min-w-[2.5rem] text-center">{currentSectionIndex + 1} / {totalSections}</span>
+                <button onClick={nextSection} disabled={currentSectionIndex >= totalSections - 1} className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-[#1A1A20] rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Siguiente sección"><SkipForward size={20} /></button>
               </div>
             )}
 
-            <div className="w-px h-12 bg-gray-700 hidden md:block"></div>
-            <div className="h-px w-12 bg-gray-700 md:hidden"></div>
+            <div className="w-px h-10 sm:h-12 bg-gray-700 hidden sm:block"></div>
+            <div className="h-px w-10 bg-gray-700 sm:hidden"></div>
 
             {/* Quick toggles */}
-            <div className="flex items-center gap-2">
-              <button onClick={() => setShowMetronome(!showMetronome)} className={`w-12 h-12 flex items-center justify-center rounded-xl transition-colors ${showMetronome ? 'bg-amber-400 text-black' : 'bg-[#1A1A20] text-gray-400 hover:bg-gray-700'}`} title="Metrónomo visual"><Zap size={24} /></button>
-              <button onClick={() => setHighContrast(!highContrast)} className={`w-12 h-12 flex items-center justify-center rounded-xl transition-colors ${highContrast ? 'bg-amber-400 text-black' : 'bg-[#1A1A20] text-gray-400 hover:bg-gray-700'}`} title="Alto contraste"><Contrast size={24} /></button>
-              <button onClick={() => { setShowSettings(!showSettings); setShowBottomControls(false); }} className={`w-12 h-12 flex items-center justify-center rounded-xl transition-colors ${showSettings ? 'bg-amber-400 text-black' : 'bg-[#1A1A20] text-gray-400 hover:bg-gray-700'}`} title="Ajustes"><Settings size={24} /></button>
-              <button onClick={() => setShowBottomControls(false)} className="w-12 h-12 flex items-center justify-center rounded-xl bg-[#1A1A20] text-gray-400 hover:bg-gray-700 transition-colors" title="Ocultar controles"><ChevronDown size={24} /></button>
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              <button onClick={() => setShowMetronome(!showMetronome)} className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-lg transition-colors ${showMetronome ? 'bg-amber-400 text-black' : 'bg-[#1A1A20] text-gray-400 hover:bg-gray-700'}`} title="Metrónomo visual"><Zap size={20} /></button>
+              <button onClick={() => setHighContrast(!highContrast)} className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-lg transition-colors ${highContrast ? 'bg-amber-400 text-black' : 'bg-[#1A1A20] text-gray-400 hover:bg-gray-700'}`} title="Alto contraste"><Contrast size={20} /></button>
+              <button onClick={() => { setShowSettings(!showSettings); setShowBottomControls(false); }} className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-lg transition-colors ${showSettings ? 'bg-amber-400 text-black' : 'bg-[#1A1A20] text-gray-400 hover:bg-gray-700'}`} title="Ajustes"><Settings size={20} /></button>
+              <button onClick={() => setShowBottomControls(false)} className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-lg bg-[#1A1A20] text-gray-400 hover:bg-gray-700 transition-colors" title="Ocultar controles"><ChevronDown size={20} /></button>
             </div>
           </div>
         )}

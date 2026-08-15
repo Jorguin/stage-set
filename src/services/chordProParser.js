@@ -20,9 +20,8 @@ export function parseChordPro(rawContent) {
     const lines = [];
     const sections = [];
     let currentSection = null;
-    let lineIndex = 0;
 
-    chordSheet.lyrics.forEach((lyricLine, idx) => {
+    chordSheet.lyrics.forEach((lyricLine) => {
       if (lyricLine.type === 'comment' && lyricLine.text.startsWith('section:')) {
         const sectionName = lyricLine.text.replace('section:', '').trim();
         currentSection = {
@@ -82,11 +81,10 @@ function fallbackParse(rawContent) {
   const lines = rawContent.split('\n');
   const sections = [];
   const parsedLines = [];
-  let lineIndex = 0;
 
   const sectionPattern = /^\[(Verse|Chorus|Bridge|Intro|Outro|Pre-Chorus|Solo|Interlude|Tag|Ending|Primera Parte|Segunda Parte|Tercera Parte|Cuarta Parte|Pre-Estribillo|Estribillo|Pre-Coro|Coro|Puente|Interludio|Final|Verso|Refrain|Hook|Breakdown|Build|Drop|Vamp|Coda)\s*\d*\]/i;
 
-  lines.forEach((line, idx) => {
+  lines.forEach((line) => {
     const sectionMatch = line.match(sectionPattern);
     if (sectionMatch) {
       sections.push({

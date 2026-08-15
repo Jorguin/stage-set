@@ -7,12 +7,47 @@
 }
 
 @layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  
   body {
     background-color: var(--color-stage);
     color: #f3f4f6;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Prevent horizontal scroll on mobile */
+  #root {
+    overflow-x: hidden;
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height for mobile */
+  }
+  
+  /* Touch targets minimum 44px */
+  @media (pointer: coarse) {
+    button, a, input, select, [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+}
+
+/* Stage mode specific - lock viewport */
+.stage-mode-active {
+  overscroll-behavior: none;
+  touch-action: pan-y;
+}
+
+/* Prevent zoom on input focus (iOS) */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
   }
 }
 
@@ -237,4 +272,214 @@ input[type="range"]::-moz-range-thumb {
 input[type="range"]:focus-visible::-webkit-slider-thumb {
   outline: 2px solid #fbbf24;
   outline-offset: 2px;
+}
+
+/* Mobile responsive utilities */
+@media (max-width: 768px) {
+  /* Prevent text overflow */
+  .mobile-text-clamp {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  /* Better chord layout on mobile */
+  .chord-line-mobile {
+    font-size: clamp(14px, 4vw, 18px);
+    line-height: 1.6;
+  }
+  
+  /* Stack controls vertically on very small screens */
+  @media (max-width: 480px) {
+    .mobile-stack {
+      flex-direction: column !important;
+    }
+    
+    .mobile-full-width {
+      width: 100% !important;
+    }
+  }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: max(0px)) {
+  .safe-area-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  
+  .safe-area-left {
+    padding-left: max(1rem, env(safe-area-inset-left));
+  }
+  
+  .safe-area-right {
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+
+/* Mobile responsive utilities */
+@media (max-width: 768px) {
+  /* Prevent text overflow */
+  .mobile-text-clamp {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  /* Better chord layout on mobile */
+  .chord-line-mobile {
+    font-size: clamp(14px, 4vw, 18px);
+    line-height: 1.6;
+  }
+  
+  /* Stack controls vertically on very small screens */
+  @media (max-width: 480px) {
+    .mobile-stack {
+      flex-direction: column !important;
+    }
+    
+    .mobile-full-width {
+      width: 100% !important;
+    }
+  }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: max(0px)) {
+  .safe-area-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  
+  .safe-area-left {
+    padding-left: max(1rem, env(safe-area-inset-left));
+  }
+  
+  .safe-area-right {
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+
+/* Stage mode specific - lock viewport */
+.stage-mode-active {
+  overscroll-behavior: none;
+  touch-action: pan-y;
+}
+
+/* Prevent zoom on input focus (iOS) */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Mobile responsive utilities */
+@media (max-width: 768px) {
+  /* Prevent text overflow */
+  .mobile-text-clamp {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  /* Better chord layout on mobile */
+  .chord-line-mobile {
+    font-size: clamp(14px, 4vw, 18px);
+    line-height: 1.6;
+  }
+  
+  /* Stack controls vertically on very small screens */
+  @media (max-width: 480px) {
+    .mobile-stack {
+      flex-direction: column !important;
+    }
+    
+    .mobile-full-width {
+      width: 100% !important;
+    }
+  }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: max(0px)) {
+  .safe-area-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  
+  .safe-area-left {
+    padding-left: max(1rem, env(safe-area-inset-left));
+  }
+  
+  .safe-area-right {
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+
+/* Stage mode specific - lock viewport */
+.stage-mode-active {
+  overscroll-behavior: none;
+  touch-action: pan-y;
+}
+
+/* Prevent zoom on input focus (iOS) */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Mobile responsive utilities */
+@media (max-width: 768px) {
+  /* Prevent text overflow */
+  .mobile-text-clamp {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  /* Better chord layout on mobile */
+  .chord-line-mobile {
+    font-size: clamp(14px, 4vw, 18px);
+    line-height: 1.6;
+  }
+  
+  /* Stack controls vertically on very small screens */
+  @media (max-width: 480px) {
+    .mobile-stack {
+      flex-direction: column !important;
+    }
+    
+    .mobile-full-width {
+      width: 100% !important;
+    }
+  }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: max(0px)) {
+  .safe-area-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  
+  .safe-area-left {
+    padding-left: max(1rem, env(safe-area-inset-left));
+  }
+  
+  .safe-area-right {
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
 }
