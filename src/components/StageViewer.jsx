@@ -816,6 +816,22 @@ const [showSettingsModal, setShowSettingsModal] = useState(false);
           </div>
         </div>
       </div>
+    {/* Tuner Modal */}
+      {showTuner && (
+        <Tuner onClose={() => setShowTuner(false)} defaultInstrument="guitar" />
+      )}
+
+      {/* Chord Glossary Modal */}
+      {showChordGlossary && (
+        <ChordGlossary 
+          onClose={() => setShowChordGlossary(false)} 
+          onSelectChord={(chord) => {
+            // Insert chord at cursor position in content
+            // For now just log
+            console.log('Selected chord:', chord);
+          }}
+        />
+      )}
     </div>
   );
 }
