@@ -10,6 +10,11 @@ export default defineConfig({
     'process.env': {},
     'process.version': '"v18.0.0"',
     'process.platform': '"browser"',
+    'process.argv': '[]',
+    'process.cwd': '() => "/"',
+    'process.nextTick': '(fn) => setTimeout(fn, 0)',
+    'process.browser': 'true',
+    'process.env.NODE_ENV': '"production"',
   },
   plugins: [
     tailwindcss(),
@@ -69,5 +74,13 @@ export default defineConfig({
   ].filter(Boolean),
   build: {
     sourcemap: true,
+    target: 'es2020',
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      define: {
+        global: 'globalThis',
+      },
+    },
   },
 })

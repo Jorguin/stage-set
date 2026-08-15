@@ -6,6 +6,22 @@ import './index.css'
 import App from './App.jsx'
 import { ErrorBoundary } from './components/ErrorBoundary'
 
+// Polyfill for process (required by some dependencies like @ftes/chordsheetjs)
+if (typeof window !== 'undefined' && typeof window.process === 'undefined') {
+  window.process = {
+    env: { NODE_ENV: 'production' },
+    version: 'v18.0.0',
+    platform: 'browser',
+    argv: [],
+    cwd: () => '/',
+    nextTick: (fn) => setTimeout(fn, 0),
+    browser: true,
+    stdin: null,
+    stdout: null,
+    stderr: null,
+  };
+}
+
 if (import.meta.env.VITE_SENTRY_DSN) {
   Sentry.init({
     dsn: import.meta.env.VITE_SENTRY_DSN,
