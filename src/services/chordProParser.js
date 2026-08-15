@@ -1,4 +1,4 @@
-import { ChordSheet } from '@ftes/chordsheetjs';
+import ChordSheet from '@ftes/chordsheetjs';
 
 export const CHORDPRO_METADATA_TAGS = [
   'title', 'artist', 'key', 'capo', 'tempo', 'time', 'timeSignature',

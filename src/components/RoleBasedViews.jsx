@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { renderChordProForRole } from '../services/chordProParser';
 
 export const ROLES = [
   { id: 'guitar', label: 'Guitarra', icon: '🎸', desc: 'Acordes completos, diagramas, capo' },
@@ -99,7 +100,6 @@ export function ChordDiagram({ chord, size = 'medium' }) {
 }
 
 export function RoleBasedContent({ parsedSong, role, semitones = 0, fontSize = 16 }) {
-  const { renderChordProForRole } = require('../services/chordProParser');
   const filteredSong = renderChordProForRole(parsedSong, role);
   
   const transposeChord = (chord) => {
@@ -169,7 +169,7 @@ export function RoleBasedContent({ parsedSong, role, semitones = 0, fontSize = 1
             <div className="flex flex-wrap items-baseline gap-1 leading-relaxed">
               {line.chords.map((chordObj, chordIdx) => (
                 <span key={chordIdx} className="relative">
-                  <span className="text-amber-400 font-bold text-lg absolute -top-6 left-0 whitespace-nowrap">
+                  <span className="text-amber-400 font-bold absolute -top-6 left-0 whitespace-nowrap text-lg">
                     {transposeChord(chordObj.chord)}
                   </span>
                   {role === 'guitar' && chordObj.chord && (
