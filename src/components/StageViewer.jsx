@@ -131,15 +131,17 @@ export default function StageViewer() {
     if (!content) return [];
     const lines = content.split('\n');
     const sections = [];
-    // English + Spanish section names
+    // English + Spanish section names - comprehensive list
     const sectionNames = [
-      'Verse', 'Chorus', 'Bridge', 'Intro', 'Outro', 'Pre-Chorus', 'Solo', 'Interlude', 'Tag', 'Ending',
+      'Verse', 'Chorus', 'Bridge', 'Intro', 'Outro', 'Pre-Chorus', 'PreChorus', 'Pre Chorus',
+      'Solo', 'Interlude', 'Tag', 'Ending', 'Pre-Verse', 'PreVerse',
       'Primera Parte', 'Segunda Parte', 'Tercera Parte', 'Cuarta Parte',
-      'Pre-Estribillo', 'Estribillo', 'Pre-Coro', 'Coro',
-      'Puente', 'Interludio', 'Final', 'Tag', 'Intro', 'Outro',
-      'Verso', 'PreCoro', 'PreCorus'
+      'Pre-Estribillo', 'PreEstribillo', 'Estribillo', 'Pre-Coro', 'PreCoro', 'Coro',
+      'Puente', 'Interludio', 'Final', 'Verso', 'Pre-Coro', 'PreCoro',
+      'Refrain', 'Hook', 'Breakdown', 'Build', 'Drop', 'Vamp', 'Coda'
     ];
-    const pattern = new RegExp(`^\\[(${sectionNames.join('|')})\\s*\\d*\\]`, 'i');
+    // Match section markers anywhere in line: [Verse], [Verse 1], [Chorus], [Bridge 2], etc.
+    const pattern = new RegExp(`\\[(${sectionNames.join('|')})\\s*\\d*\\]`, 'i');
     lines.forEach((line, index) => {
       const match = line.match(pattern);
       if (match) {
@@ -517,10 +519,14 @@ export default function StageViewer() {
                 )}
               </div>
             ))}
-            {/* Full-width flash overlay on accent beat only */}
-            {metronomeFlash.show && metronomeFlash.accent && (
+            {/* Full-width flash overlay on ALL beats - accent strong, others subtle */}
+            {metronomeFlash.show && (
               <div 
-                className="absolute inset-0 bg-gradient-to-r from-amber-400/20 via-amber-300/10 to-amber-400/20 pointer-events-none animate-metronome-flash"
+                className={`absolute inset-0 pointer-events-none animate-metronome-flash ${
+                  metronomeFlash.accent
+                    ? 'bg-gradient-to-r from-amber-400/30 via-amber-300/15 to-amber-400/30'
+                    : 'bg-gradient-to-r from-amber-400/10 via-transparent to-amber-400/10'
+                }`}
               />
             )}
           </div>

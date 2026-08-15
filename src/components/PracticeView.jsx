@@ -26,12 +26,15 @@ export default function PracticeView() {
     const lines = content.split('\n');
     const sections = [];
     const sectionNames = [
-      'Intro', 'Verse', 'Chorus', 'Bridge', 'Outro', 'Pre-Chorus', 'Solo', 'Interlude', 'Tag', 'Ending',
+      'Verse', 'Chorus', 'Bridge', 'Intro', 'Outro', 'Pre-Chorus', 'PreChorus', 'Pre Chorus',
+      'Solo', 'Interlude', 'Tag', 'Ending', 'Pre-Verse', 'PreVerse',
       'Primera Parte', 'Segunda Parte', 'Tercera Parte', 'Cuarta Parte',
-      'Pre-Estribillo', 'Estribillo', 'Pre-Coro', 'Coro',
-      'Puente', 'Interludio', 'Final', 'Verso'
+      'Pre-Estribillo', 'PreEstribillo', 'Estribillo', 'Pre-Coro', 'PreCoro', 'Coro',
+      'Puente', 'Interludio', 'Final', 'Verso',
+      'Refrain', 'Hook', 'Breakdown', 'Build', 'Drop', 'Vamp', 'Coda'
     ];
-    const pattern = new RegExp(`^\\[(${sectionNames.join('|')})\\s*\\d*\\]`, 'i');
+    // Match section markers anywhere in line: [Verse], [Verse 1], [Chorus], [Bridge 2], etc.
+    const pattern = new RegExp(`\\[(${sectionNames.join('|')})\\s*\\d*\\]`, 'i');
     lines.forEach((line, index) => {
       const match = line.match(pattern);
       if (match) {
