@@ -9,11 +9,16 @@
  * [C]Amazing [G]grace [Am]how [F]sweet the sound
  */
 
-// Chord regex - matches valid chord symbols (including complex ones like B(add2), E/G#, C#m7, etc.)
-const CHORD_REGEX = /^[A-G][#b]?(?:m(?:aj|in)?|maj|dim|aug|sus[0-9]*|add[0-9]*|[0-9]+)(?:\([^)]+\))?(?:\/[A-G][#b]?(?:m(?:aj|in)?|maj|dim|aug|sus[0-9]*|add[0-9]*|[0-9]+)?(?:\([^)]+\))?)?$/;
+// Comprehensive chord regex - handles all common chord formats:
+// Root: A-G with optional #/b
+// Quality: m, mi, min, maj, M, dim, °, aug, +, sus2, sus4, sus, add2, add4, add9, 2, 4, 6, 7, 9, 11, 13
+// Extensions: (add2), (add9), (no3), etc.
+// Bass: /C, /C#, /Eb, etc.
+// Extensions after quality: m7, maj7, m9, 7, 9, 13, 6, 2, 4, etc.
+const CHORD_REGEX = /^[A-G][#b]?(?:(?:m(?:i|in)?|mi|min|maj|M|dim|°|aug|\+|sus[24]?|add[249]?|[24679]|1[13])(?:[24679]|1[13])?|[24679]|1[13])?(?:\([^)]+\))?(?:\/[A-G][#b]?(?:(?:m(?:i|in)?|mi|min|maj|M|dim|°|aug|\+|sus[24]?|add[249]?|[24679]|1[13])(?:[24679]|1[13])?|[24679]|1[13])?(?:\([^)]+\))?)?$/;
 
-// Simpler fallback regex for basic chords
-const SIMPLE_CHORD_REGEX = /^[A-G][#b]?(?:m|maj|min|dim|aug|sus|add|[0-9])?(?:\([^)]+\))?(?:\/[A-G][#b]?)?$/;
+// Simpler fallback for basic chords
+const SIMPLE_CHORD_REGEX = /^[A-G][#b]?(?:m|mi|min|maj|M|dim|°|aug|\+|sus[24]?|add[249]?|[24679]|1[13])?(?:\([^)]+\))?(?:\/[A-G][#b]?(?:m|mi|min|maj|M|dim|°|aug|\+|sus[24]?|add[249]?|[24679]|1[13])?(?:\([^)]+\))?)?$/;
 
 function isChord(token) {
   return CHORD_REGEX.test(token) || SIMPLE_CHORD_REGEX.test(token);
