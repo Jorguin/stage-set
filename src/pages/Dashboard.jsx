@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { calculateRetentionFromProgress } from '../utils/spacedRepetition';
 import { parseSections, getSectionKey } from '../utils/songSections';
-import { LogOut, Play, Plus, Calendar, Folder, Mic2, MapPin, CheckSquare, Square, Trash2, Music2, Users, Settings, X, ChevronDown, Save, Edit, Brain, Target, GripVertical, Share2 } from 'lucide-react';
+import { autoDetectChords, isAlreadyChordPro } from '../utils/chordParser';
+import { LogOut, Play, Plus, Calendar, Folder, Mic2, MapPin, CheckSquare, Square, Trash2, Music2, Users, Settings, X, ChevronDown, Save, Edit, Brain, Target, GripVertical, Share2, Zap } from 'lucide-react';
 
 export default function Dashboard() {
   const [bands, setBands] = useState([]);
@@ -1417,6 +1418,30 @@ const { data: { user } } = await supabase.auth.getUser();
                   className="w-full bg-[#1A1A20] border border-gray-700 rounded-xl px-4 py-3 text-white h-64 font-mono text-sm focus:outline-none focus:border-amber-400"
                   placeholder="[Em]Today is [G]gonna be the day..."
                 />
+                <div className="flex items-center gap-2 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isAlreadyChordPro(newSongContent)) {
+                        alert('El contenido ya parece estar en formato ChordPro');
+                        return;
+                      }
+                      const converted = autoDetectChords(newSongContent);
+                      if (converted === newSongContent) {
+                        alert('No se detectaron líneas de acordes.\n\nFormato esperado:\nC       G       Am       F\nAmazing grace how sweet the sound');
+                      } else {
+                        setNewSongContent(converted);
+                      }
+                    }}
+                    disabled={isAlreadyChordPro(newSongContent)}
+                    className="px-3 py-1.5 text-xs font-medium text-white bg-amber-500/20 border border-amber-500/50 rounded-lg hover:bg-amber-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                  >
+                    <Zap size={12} /> Auto-detectar acordes
+                  </button>
+                  <span className="text-xs text-gray-500">
+                    Pega acordes arriba de la letra (una línea acordes, una línea letra)
+                  </span>
+                </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-4 bg-[#1A1A20] rounded-xl border border-gray-800">
