@@ -8,41 +8,46 @@ describe('calculateRetentionSync', () => {
   const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
   const fifteenDaysAgo = new Date(today.getTime() - 15 * 24 * 60 * 60 * 1000)
 
-  it('returns 100 when just practiced (today)', () => {
-    expect(calculateRetentionSync(today.toISOString(), 1)).toBe(100)
-    expect(calculateRetentionSync(today.toISOString(), 5)).toBe(100)
+  it('returns 100 when just practiced (today) - with progress data', () => {
+    expect(calculateRetentionSync(today.toISOString(), 1, true)).toBe(100)
+    expect(calculateRetentionSync(today.toISOString(), 5, true)).toBe(100)
   })
 
-  it('returns 100 for future dates (daysElapsed <= 0)', () => {
+  it('returns 100 for future dates (daysElapsed <= 0) - with progress data', () => {
     const future = new Date(today.getTime() + 24 * 60 * 60 * 1000)
-    expect(calculateRetentionSync(future.toISOString(), 1)).toBe(100)
+    expect(calculateRetentionSync(future.toISOString(), 1, true)).toBe(100)
   })
 
-  it('decays linearly for mastery level 1 (interval = 1 day)', () => {
-    expect(calculateRetentionSync(yesterday.toISOString(), 1)).toBe(50)
-    expect(calculateRetentionSync(threeDaysAgo.toISOString(), 1)).toBe(0)
+  it('decays linearly for mastery level 1 (interval = 1 day) - with progress data', () => {
+    expect(calculateRetentionSync(yesterday.toISOString(), 1, true)).toBe(50)
+    expect(calculateRetentionSync(threeDaysAgo.toISOString(), 1, true)).toBe(0)
   })
 
-  it('decays linearly for mastery level 2 (interval = 3 days)', () => {
-    expect(calculateRetentionSync(yesterday.toISOString(), 2)).toBe(83)
-    expect(calculateRetentionSync(threeDaysAgo.toISOString(), 2)).toBe(50)
-    expect(calculateRetentionSync(sevenDaysAgo.toISOString(), 2)).toBe(0)
+  it('decays linearly for mastery level 2 (interval = 3 days) - with progress data', () => {
+    expect(calculateRetentionSync(yesterday.toISOString(), 2, true)).toBe(83)
+    expect(calculateRetentionSync(threeDaysAgo.toISOString(), 2, true)).toBe(50)
+    expect(calculateRetentionSync(sevenDaysAgo.toISOString(), 2, true)).toBe(0)
   })
 
-  it('decays linearly for mastery level 3 (interval = 7 days)', () => {
-    expect(calculateRetentionSync(threeDaysAgo.toISOString(), 3)).toBe(79)
-    expect(calculateRetentionSync(sevenDaysAgo.toISOString(), 3)).toBe(50)
-    expect(calculateRetentionSync(fifteenDaysAgo.toISOString(), 3)).toBe(0)
+  it('decays linearly for mastery level 3 (interval = 7 days) - with progress data', () => {
+    expect(calculateRetentionSync(threeDaysAgo.toISOString(), 3, true)).toBe(79)
+    expect(calculateRetentionSync(sevenDaysAgo.toISOString(), 3, true)).toBe(50)
+    expect(calculateRetentionSync(fifteenDaysAgo.toISOString(), 3, true)).toBe(0)
   })
 
-  it('decays linearly for mastery level 5 (interval = 30 days)', () => {
+  it('decays linearly for mastery level 5 (interval = 30 days) - with progress data', () => {
     const fifteenDaysAgo = new Date(today.getTime() - 15 * 24 * 60 * 60 * 1000)
     const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
     const sixtyDaysAgo = new Date(today.getTime() - 60 * 24 * 60 * 60 * 1000)
     
-    expect(calculateRetentionSync(fifteenDaysAgo.toISOString(), 5)).toBe(75)
-    expect(calculateRetentionSync(thirtyDaysAgo.toISOString(), 5)).toBe(50)
-    expect(calculateRetentionSync(sixtyDaysAgo.toISOString(), 5)).toBe(0)
+    expect(calculateRetentionSync(fifteenDaysAgo.toISOString(), 5, true)).toBe(75)
+    expect(calculateRetentionSync(thirtyDaysAgo.toISOString(), 5, true)).toBe(50)
+    expect(calculateRetentionSync(sixtyDaysAgo.toISOString(), 5, true)).toBe(0)
+  })
+
+  it('returns 0 for new songs without progress data', () => {
+    expect(calculateRetentionSync(today.toISOString(), 1)).toBe(0)
+    expect(calculateRetentionSync(today.toISOString(), 1, false)).toBe(0)
   })
 
   it('returns 0 for invalid dates', () => {

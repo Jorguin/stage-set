@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { parseLine } from '../utils/musicLogic';
-import { ArrowLeft, Minus, Plus, Play, Pause, RefreshCw, FileText, Contrast, Zap, SkipBack, SkipForward, Settings, X } from 'lucide-react';
+import { ArrowLeft, Minus, Plus, Play, Pause, RefreshCw, FileText, Contrast, Zap, SkipBack, SkipForward, Settings, X, ChevronUp, ChevronDown } from 'lucide-react';
 
 export default function StageViewer() {
   const { id } = useParams();
@@ -33,7 +33,7 @@ export default function StageViewer() {
   const [metronomeSound, setMetronomeSound] = useState(false);
   const metronomeRef = useRef(null);
   const metronomeIntervalRef = useRef(null);
-  const [metronomeFlash, setMetronomeFlash] = useState(false);
+  const [metronomeFlash, setMetronomeFlash] = useState({ show: false, accent: false });
   const [currentBeat, setCurrentBeat] = useState(1);
   const audioContextRef = useRef(null);
 
@@ -50,6 +50,10 @@ export default function StageViewer() {
 
   // Settings panel
   const [showSettings, setShowSettings] = useState(false);
+  
+  // Bottom controls visibility (mobile responsive)
+  const [showBottomControls, setShowBottomControls] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   // LocalStorage persistence key
   const storageKey = `stage:${id}`;
@@ -96,6 +100,19 @@ export default function StageViewer() {
       localStorage.setItem(storageKey, JSON.stringify(state));
     }
   }, [semitones, fontSize, highContrast, showMetronome, bpm, continuousMode, isScrolling, song, storageKey]);
+
+  // Detect mobile screen size
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Auto-collapse controls on mobile when scrolling starts
+  useEffect(() => {
+    if (isMobile && isScrolling) setShowBottomControls(false);
+  }, [isScrolling, isMobile]);
 
   // Initialize from location state
   useEffect(() => {
@@ -377,14 +394,16 @@ export default function StageViewer() {
     metronomeIntervalRef.current = setInterval(() => {
       const isAccent = beatCount === 1;
       setCurrentBeat(beatCount);
-      setMetronomeFlash(true);
+      setMetronomeFlash({ show: true, accent: isAccent });
       
       if (metronomeSound) {
         initAudio();
         playClick(isAccent);
       }
       
-      setTimeout(() => setMetronomeFlash(false), 80);
+      // Accent beat flashes longer (120ms), regular beats shorter (50ms)
+      const flashDuration = isAccent ? 120 : 50;
+      setTimeout(() => setMetronomeFlash({ show: false, accent: false }), flashDuration);
       
       beatCount = beatCount >= beatsPerMeasure ? 1 : beatCount + 1;
     }, intervalMs);
@@ -469,7 +488,7 @@ export default function StageViewer() {
       {showMetronome && (
         <div 
           ref={metronomeRef}
-          className="h-3 w-full bg-gray-900 metronome-bar border-b border-gray-700"
+          className="h-4 w-full bg-gray-900 metronome-bar border-b border-gray-700"
           style={{ backgroundColor: highContrast ? '#000' : '#0A0A0F' }}
         >
           <div className="h-full flex items-center justify-between px-2">
@@ -477,21 +496,31 @@ export default function StageViewer() {
             {[...Array(parseInt(timeSignature.split('/')[0]) || 4)].map((_, i) => (
               <div 
                 key={i}
-                className="flex-1 flex items-center justify-center"
+                className="flex-1 flex items-center justify-center relative"
               >
                 <div 
-                  className={`w-2 h-2 rounded-full transition-all duration-100 ${
+                  className={`w-2.5 h-2.5 rounded-full transition-all duration-70 ${
                     i + 1 === currentBeat 
-                      ? 'bg-amber-400 scale-150 shadow-[0_0_8px_rgba(251,191,36,0.8)]' 
-                      : 'bg-gray-600'
+                      ? (metronomeFlash.show 
+                          ? (metronomeFlash.accent 
+                              ? 'bg-amber-300 scale-200 shadow-[0_0_15px_rgba(251,191,36,1)]' 
+                              : 'bg-amber-400 scale-150 shadow-[0_0_8px_rgba(251,191,36,0.6)]')
+                          : 'bg-amber-400 scale-125 shadow-[0_0_6px_rgba(251,191,36,0.4)]')
+                      : 'bg-gray-700'
                   }`}
                 />
+                {/* Beat number label for first beat */}
+                {i === 0 && (
+                  <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[8px] font-bold text-amber-400/80 whitespace-nowrap">
+                    1
+                  </span>
+                )}
               </div>
             ))}
-            {/* Flash overlay on accent beat */}
-            {metronomeFlash && currentBeat === 1 && (
+            {/* Full-width flash overlay on accent beat only */}
+            {metronomeFlash.show && metronomeFlash.accent && (
               <div 
-                className="absolute inset-0 bg-amber-400/30 pointer-events-none animate-metronome-flash"
+                className="absolute inset-0 bg-gradient-to-r from-amber-400/20 via-amber-300/10 to-amber-400/20 pointer-events-none animate-metronome-flash"
               />
             )}
           </div>
@@ -546,14 +575,6 @@ export default function StageViewer() {
               <FileText size={24} />
             </a>
           )}
-          {/* Settings button */}
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            className="w-12 h-12 flex items-center justify-center bg-panel rounded-full text-white hover:text-amber-400 transition-colors shadow-lg"
-            title="Ajustes (Esc para cerrar)"
-          >
-            <Settings size={24} />
-          </button>
         </div>
       </div>
 
@@ -703,7 +724,7 @@ export default function StageViewer() {
       {/* Contenido (con ref para scroll) */}
       <div 
         ref={scrollRef}
-        className="flex-1 overflow-y-auto pt-32 md:pt-48 pb-64 px-4 md:px-12 lg:px-24"
+        className="flex-1 overflow-y-auto pt-32 md:pt-48 pb-20 md:pb-64 px-4 md:px-12 lg:px-24"
         style={{ scrollBehavior: isScrolling ? 'auto' : 'smooth' }}
       >
         <div className="max-w-4xl mx-auto space-y-6 min-h-[calc(100vh+100px)]">
@@ -740,108 +761,96 @@ export default function StageViewer() {
         </div>
       </div>
 
-      {/* Controles Flotantes Inferiores (RF2.3 Mínimo 48x48px) */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col md:flex-row items-center gap-4 bg-panel p-4 rounded-3xl shadow-2xl border border-gray-800 z-20">
-        
-        {/* Controles de Tono */}
-        <div className="flex items-center gap-2 bg-[#1A1A20] p-1 rounded-2xl flex-wrap justify-center">
-          <button 
-            onClick={() => setSemitones(s => s - 1)}
-            className="w-12 h-12 flex items-center justify-center rounded-xl hover:bg-gray-700 transition-colors"
-            title="-1 Semitono"
-          >
-            <Minus size={24} />
-          </button>
-          <div className="flex flex-col items-center justify-center w-14 font-bold">
-            <span className="text-xs text-gray-500 uppercase">Tono</span>
-            <span className={semitones !== 0 ? 'text-amber-400 text-lg' : 'text-white text-lg'}>
-              {semitones > 0 ? `+${semitones}` : semitones}
-            </span>
-          </div>
-          <button 
-            onClick={() => setSemitones(s => s + 1)}
-            className="w-12 h-12 flex items-center justify-center rounded-xl hover:bg-gray-700 transition-colors"
-            title="+1 Semitono"
-          >
-            <Plus size={24} />
-          </button>
-          <button 
-            onClick={() => setSemitones(0)}
-            className="w-12 h-12 flex items-center justify-center rounded-xl hover:bg-gray-700 transition-colors text-gray-400"
-            title="Tono Original"
-          >
-            <RefreshCw size={20} />
-          </button>
-        </div>
+      {/* Controles Flotantes Inferiores - Responsive & Collapsible */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
+        {/* Collapsed state - just play/pause + expand */}
+        {(!showBottomControls || isMobile) && (
+          <div className="flex items-center gap-3 bg-panel/95 backdrop-blur-sm p-3 rounded-2xl shadow-2xl border border-gray-800 animate-slide-up">
+            {/* Transpose - compact */}
+            <div className="flex items-center gap-1 bg-[#1A1A20] p-1 rounded-xl">
+              <button onClick={() => setSemitones(s => s - 1)} className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-700 transition-colors" title="-1 Semitono"><Minus size={20} /></button>
+              <span className={`w-10 text-center font-bold ${semitones !== 0 ? 'text-amber-400' : 'text-white'}`}>{semitones > 0 ? `+${semitones}` : semitones}</span>
+              <button onClick={() => setSemitones(s => s + 1)} className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-700 transition-colors" title="+1 Semitono"><Plus size={20} /></button>
+              <button onClick={() => setSemitones(0)} className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-700 transition-colors text-gray-400" title="Reset"><RefreshCw size={18} /></button>
+            </div>
 
-        <div className="w-px h-12 bg-gray-700 hidden md:block"></div>
-        <div className="h-px w-12 bg-gray-700 md:hidden"></div>
-
-        {/* Control de Play/Pause */}
-        <button
-          onClick={toggleScroll}
-          className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all ${
-            isScrolling 
-              ? 'bg-red-500 text-white hover:bg-red-600 shadow-[0_0_15px_rgba(239,68,68,0.4)]' 
-              : 'bg-amber-400 text-black hover:bg-amber-500 shadow-[0_0_15px_rgba(251,191,36,0.3)]'
-          }`}
-        >
-          {isScrolling ? <Pause size={32} /> : <Play size={32} className="ml-1" />}
-        </button>
-
-        <div className="w-px h-12 bg-gray-700 hidden md:block"></div>
-        <div className="h-px w-12 bg-gray-700 md:hidden"></div>
-
-        {/* Continuous mode navigation */}
-        {continuousMode && setlistSongs.length > 0 && (
-          <div className="flex items-center gap-2">
+            {/* Play/Pause - main action */}
             <button
-              onClick={() => currentSongIndex > 0 && navigate(`/stage/${setlistSongs[currentSongIndex - 1].id}`)}
-              disabled={currentSongIndex === 0}
-              className="w-12 h-12 flex items-center justify-center bg-[#1A1A20] rounded-xl hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-              title="Canción anterior"
+              onClick={toggleScroll}
+              className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${
+                isScrolling ? 'bg-red-500 text-white hover:bg-red-600 shadow-[0_0_15px_rgba(239,68,68,0.4)]' : 'bg-amber-400 text-black hover:bg-amber-500 shadow-[0_0_15px_rgba(251,191,36,0.3)]'
+              }`}
             >
-              <SkipBack size={24} />
+              {isScrolling ? <Pause size={28} /> : <Play size={28} className="ml-1" />}
             </button>
-            <span className="text-xs font-mono text-gray-400 px-2">{currentSongIndex + 1} / {setlistSongs.length}</span>
-            <button
-              onClick={() => currentSongIndex < setlistSongs.length - 1 && navigate(`/stage/${setlistSongs[currentSongIndex + 1].id}`)}
-              disabled={currentSongIndex === setlistSongs.length - 1}
-              className="w-12 h-12 flex items-center justify-center bg-[#1A1A20] rounded-xl hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-              title="Siguiente canción"
-            >
-              <SkipForward size={24} />
-            </button>
+
+            {/* Expand button / Continuous mode indicator */}
+            {continuousMode && setlistSongs.length > 0 ? (
+              <span className="text-xs font-mono text-gray-400 px-2 w-10 text-center">{currentSongIndex + 1}/{setlistSongs.length}</span>
+            ) : (
+              <button
+                onClick={() => setShowBottomControls(true)}
+                className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#1A1A20] text-gray-400 hover:bg-gray-700 transition-colors"
+                title="Más controles"
+              >
+                <ChevronUp size={24} />
+              </button>
+            )}
           </div>
         )}
 
-        <div className="w-px h-12 bg-gray-700 hidden md:block"></div>
-        <div className="h-px w-12 bg-gray-700 md:hidden"></div>
+        {/* Expanded state - full controls */}
+        {showBottomControls && !isMobile && (
+          <div className="flex flex-col md:flex-row items-center gap-4 bg-panel/95 backdrop-blur-sm p-4 rounded-3xl shadow-2xl border border-gray-800 animate-slide-up md:min-w-[600px]">
+            
+            {/* Transpose Controls */}
+            <div className="flex items-center gap-2 bg-[#1A1A20] p-1 rounded-2xl flex-wrap justify-center">
+              <button onClick={() => setSemitones(s => s - 1)} className="w-12 h-12 flex items-center justify-center rounded-xl hover:bg-gray-700 transition-colors" title="-1 Semitono"><Minus size={24} /></button>
+              <div className="flex flex-col items-center justify-center w-14 font-bold">
+                <span className="text-xs text-gray-500 uppercase">Tono</span>
+                <span className={semitones !== 0 ? 'text-amber-400 text-lg' : 'text-white text-lg'}>{semitones > 0 ? `+${semitones}` : semitones}</span>
+              </div>
+              <button onClick={() => setSemitones(s => s + 1)} className="w-12 h-12 flex items-center justify-center rounded-xl hover:bg-gray-700 transition-colors" title="+1 Semitono"><Plus size={24} /></button>
+              <button onClick={() => setSemitones(0)} className="w-12 h-12 flex items-center justify-center rounded-xl hover:bg-gray-700 transition-colors text-gray-400" title="Tono Original"><RefreshCw size={20} /></button>
+            </div>
 
-        {/* Quick toggles */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowMetronome(!showMetronome)}
-            className={`w-12 h-12 flex items-center justify-center rounded-xl transition-colors ${showMetronome ? 'bg-amber-400 text-black' : 'bg-[#1A1A20] text-gray-400 hover:bg-gray-700'}`}
-            title="Metrónomo visual"
-          >
-            <Zap size={24} />
-          </button>
-          <button
-            onClick={() => setHighContrast(!highContrast)}
-            className={`w-12 h-12 flex items-center justify-center rounded-xl transition-colors ${highContrast ? 'bg-amber-400 text-black' : 'bg-[#1A1A20] text-gray-400 hover:bg-gray-700'}`}
-            title="Alto contraste"
-          >
-            <Contrast size={24} />
-          </button>
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            className={`w-12 h-12 flex items-center justify-center rounded-xl transition-colors ${showSettings ? 'bg-amber-400 text-black' : 'bg-[#1A1A20] text-gray-400 hover:bg-gray-700'}`}
-            title="Ajustes"
-          >
-            <Settings size={24} />
-          </button>
-        </div>
+            <div className="w-px h-12 bg-gray-700 hidden md:block"></div>
+            <div className="h-px w-12 bg-gray-700 md:hidden"></div>
+
+            {/* Play/Pause */}
+            <button
+              onClick={toggleScroll}
+              className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all ${
+                isScrolling ? 'bg-red-500 text-white hover:bg-red-600 shadow-[0_0_15px_rgba(239,68,68,0.4)]' : 'bg-amber-400 text-black hover:bg-amber-500 shadow-[0_0_15px_rgba(251,191,36,0.3)]'
+              }`}
+            >
+              {isScrolling ? <Pause size={32} /> : <Play size={32} className="ml-1" />}
+            </button>
+
+            <div className="w-px h-12 bg-gray-700 hidden md:block"></div>
+            <div className="h-px w-12 bg-gray-700 md:hidden"></div>
+
+            {/* Continuous mode navigation */}
+            {continuousMode && setlistSongs.length > 0 && (
+              <div className="flex items-center gap-2">
+                <button onClick={() => currentSongIndex > 0 && navigate(`/stage/${setlistSongs[currentSongIndex - 1].id}`)} disabled={currentSongIndex === 0} className="w-12 h-12 flex items-center justify-center bg-[#1A1A20] rounded-xl hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Canción anterior"><SkipBack size={24} /></button>
+                <span className="text-xs font-mono text-gray-400 px-2">{currentSongIndex + 1} / {setlistSongs.length}</span>
+                <button onClick={() => currentSongIndex < setlistSongs.length - 1 && navigate(`/stage/${setlistSongs[currentSongIndex + 1].id}`)} disabled={currentSongIndex === setlistSongs.length - 1} className="w-12 h-12 flex items-center justify-center bg-[#1A1A20] rounded-xl hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Siguiente canción"><SkipForward size={24} /></button>
+              </div>
+            )}
+
+            <div className="w-px h-12 bg-gray-700 hidden md:block"></div>
+            <div className="h-px w-12 bg-gray-700 md:hidden"></div>
+
+            {/* Quick toggles */}
+            <div className="flex items-center gap-2">
+              <button onClick={() => setShowMetronome(!showMetronome)} className={`w-12 h-12 flex items-center justify-center rounded-xl transition-colors ${showMetronome ? 'bg-amber-400 text-black' : 'bg-[#1A1A20] text-gray-400 hover:bg-gray-700'}`} title="Metrónomo visual"><Zap size={24} /></button>
+              <button onClick={() => setHighContrast(!highContrast)} className={`w-12 h-12 flex items-center justify-center rounded-xl transition-colors ${highContrast ? 'bg-amber-400 text-black' : 'bg-[#1A1A20] text-gray-400 hover:bg-gray-700'}`} title="Alto contraste"><Contrast size={24} /></button>
+              <button onClick={() => { setShowSettings(!showSettings); setShowBottomControls(false); }} className={`w-12 h-12 flex items-center justify-center rounded-xl transition-colors ${showSettings ? 'bg-amber-400 text-black' : 'bg-[#1A1A20] text-gray-400 hover:bg-gray-700'}`} title="Ajustes"><Settings size={24} /></button>
+              <button onClick={() => setShowBottomControls(false)} className="w-12 h-12 flex items-center justify-center rounded-xl bg-[#1A1A20] text-gray-400 hover:bg-gray-700 transition-colors" title="Ocultar controles"><ChevronDown size={24} /></button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

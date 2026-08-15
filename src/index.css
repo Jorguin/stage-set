@@ -118,6 +118,17 @@
   animation: metronomeFlashPulse 0.15s ease-out forwards;
 }
 
+/* Metronome accent flash - stronger, longer */
+@keyframes metronomeAccentFlash {
+  0% { opacity: 0.15; }
+  20% { opacity: 0.35; }
+  100% { opacity: 0; }
+}
+
+.animate-metronome-flash {
+  animation: metronomeAccentFlash 0.18s ease-out forwards;
+}
+
 /* Settings panel animation */
 @keyframes slideDown {
   from { opacity: 0; transform: translateY(-10px); }
@@ -126,6 +137,16 @@
 
 .animate-slide-down {
   animation: slideDown 0.2s ease-out;
+}
+
+/* Bottom controls animation */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.2s ease-out;
 }
 
 /* Section marker highlight */
