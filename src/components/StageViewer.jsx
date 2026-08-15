@@ -24,6 +24,7 @@ export default function StageViewer() {
 
   // Section markers
   const [sections, setSections] = useState([]);
+  const [totalSections, setTotalSections] = useState(0);
 
   // Visual metronome
   const [showMetronome, setShowMetronome] = useState(false);
@@ -164,6 +165,7 @@ export default function StageViewer() {
 
         const parsedSections = parseSections(data.content);
         setSections(parsedSections);
+        setTotalSections(parsedSections.length);
 
         // Fetch attachment URLs if they exist
         if (data.mp3_url) {
