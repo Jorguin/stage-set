@@ -11,36 +11,32 @@ export function useSectionAutoScroll({
   const [isScrolling, setIsScrolling] = useState(false);
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [sectionProgress, setSectionProgress] = useState(0);
+  const [totalSections, setTotalSections] = useState(0);
   const scrollRef = useRef(null);
   const animationRef = useRef(null);
   const startTimeRef = useRef(null);
   const sectionTimingsRef = useRef([]);
 
-  // Early return if no parsedSong
-  if (!parsedSong || !parsedSong.sections || parsedSong.sections.length === 0) {
-    return {
-      scrollRef,
-      isScrolling: false,
-      currentSectionIndex: 0,
-      sectionProgress: 0,
-      startAutoScroll: () => {},
-      stopAutoScroll: () => {},
-      toggleScroll: () => {},
-      scrollToSection: () => {},
-      nextSection: () => {},
-      prevSection: () => {},
-      totalSections: 0
-    };
-  }
-
+  // Calculate total sections whenever parsedSong changes
   useEffect(() => {
-    if (parsedSong) {
+    if (parsedSong && parsedSong.sections) {
+      setTotalSections(parsedSong.sections.length);
+    } else {
+      setTotalSections(0);
+    }
+  }, [parsedSong]);
+
+  // Calculate section timings whenever parsedSong, bpm, or timeSignature changes
+  useEffect(() => {
+    if (parsedSong && parsedSong.sections && parsedSong.sections.length > 0) {
       sectionTimingsRef.current = calculateSectionTimings(parsedSong, bpm, timeSignature);
+    } else {
+      sectionTimingsRef.current = [];
     }
   }, [parsedSong, bpm, timeSignature]);
 
   const scrollToSection = useCallback((sectionIndex) => {
-    if (!scrollRef.current || !parsedSong) return;
+    if (!scrollRef.current || !parsedSong || !parsedSong.sections) return;
     
     const section = parsedSong.sections[sectionIndex];
     if (!section) return;
@@ -56,7 +52,7 @@ export function useSectionAutoScroll({
   }, [parsedSong, onSectionChange]);
 
   const startAutoScroll = useCallback(() => {
-    if (!parsedSong || sectionTimingsRef.current.length === 0) return;
+    if (!parsedSong || !parsedSong.sections || sectionTimingsRef.current.length === 0) return;
     
     setIsScrolling(true);
     startTimeRef.current = performance.now();
@@ -79,7 +75,7 @@ export function useSectionAutoScroll({
   }, [isScrolling, startAutoScroll, stopAutoScroll]);
 
   const animateScroll = useCallback(() => {
-    if (!isScrolling || !scrollRef.current) {
+    if (!isScrolling || !scrollRef.current || !parsedSong || !parsedSong.sections) {
       return;
     }
 
@@ -139,10 +135,10 @@ export function useSectionAutoScroll({
   }, [isScrolling, parsedSong]);
 
   const nextSection = useCallback(() => {
-    if (currentSectionIndex < parsedSong.sections.length - 1) {
+    if (currentSectionIndex < totalSections - 1) {
       scrollToSection(currentSectionIndex + 1);
     }
-  }, [currentSectionIndex, parsedSong.sections.length, scrollToSection]);
+  }, [currentSectionIndex, totalSections, scrollToSection]);
 
   const prevSection = useCallback(() => {
     if (currentSectionIndex > 0) {
@@ -169,12 +165,8 @@ export function useSectionAutoScroll({
     scrollToSection,
     nextSection,
     prevSection,
-    totalSections: parsedSong.sections.length
+    totalSections
   };
-}
-
-function cancelFrameAnimation(id) {
-  cancelAnimationFrame(id);
 }
 
 export function SectionProgressBar({ 
@@ -203,7 +195,7 @@ export function SectionJumpButtons({
   onJump,
   activeSection 
 }) {
-  if (!sections.length) return null;
+  if (!sections?.length) return null;
 
   return (
     <div className="flex flex-wrap gap-1 justify-center">
