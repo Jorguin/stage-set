@@ -25,6 +25,7 @@ export default function StageViewer() {
   // Section markers
   const [sections, setSections] = useState([]);
   const [totalSections, setTotalSections] = useState(0);
+  const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
 
   // Visual metronome
   const [showMetronome, setShowMetronome] = useState(false);
@@ -157,7 +158,7 @@ export default function StageViewer() {
       const lineElements = scrollRef.current?.querySelectorAll('[data-line-index]');
       if (lineElements && lineElements[lineIndex]) {
         lineElements[lineIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setActiveSectionIndex(currentSectionIndex - 1);
+        setCurrentSectionIndex(currentSectionIndex - 1);
       }
     }
   }, [currentSectionIndex, sections]);
@@ -168,7 +169,7 @@ export default function StageViewer() {
       const lineElements = scrollRef.current?.querySelectorAll('[data-line-index]');
       if (lineElements && lineElements[lineIndex]) {
         lineElements[lineIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setActiveSectionIndex(currentSectionIndex + 1);
+        setCurrentSectionIndex(currentSectionIndex + 1);
       }
     }
   }, [currentSectionIndex, sections]);
