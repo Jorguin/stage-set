@@ -791,21 +791,21 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen p-6 max-w-4xl mx-auto">
-      <header className="flex flex-col md:flex-row md:justify-between md:items-center mb-8 gap-4">
+    <div className="min-h-screen p-3 md:p-6 max-w-4xl mx-auto">
+      <header className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white flex items-center gap-2 tracking-wider">
+          <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-2 tracking-wider">
             STAGE<span className="text-amber-400">SET</span>
           </h1>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto">
           {/* Band selector with management */}
-          <div className="relative">
+          <div className="relative w-full sm:w-auto flex-1 min-w-0">
             <select 
               value={activeBandId || ''}
               onChange={(e) => setActiveBandId(e.target.value)}
-              className="bg-panel border border-gray-700 text-white rounded-xl px-4 py-2 focus:outline-none focus:border-amber-400 font-medium pr-10 appearance-none"
+              className="w-full bg-panel border border-gray-700 text-white rounded-xl px-4 py-2 focus:outline-none focus:border-amber-400 font-medium pr-10 appearance-none text-sm"
             >
               {bands.map(band => (
                 <option key={band.id} value={band.id}>{band.name}</option>
@@ -816,7 +816,7 @@ export default function Dashboard() {
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
             <button
               onClick={() => { setNewBandName(''); setIsBandModalOpen(true); }}
               className="p-2 bg-[#1A1A20] rounded-xl text-gray-400 hover:text-white hover:bg-gray-700 transition-colors border border-gray-800"
@@ -825,12 +825,12 @@ export default function Dashboard() {
               <Plus size={20} />
             </button>
             {editingBandId ? (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
                 <input
                   type="text"
                   value={editBandName}
                   onChange={(e) => setEditBandName(e.target.value)}
-                  className="bg-panel border border-amber-400 text-white rounded-xl px-3 py-2 text-sm focus:outline-none w-40"
+                  className="bg-panel border border-amber-400 text-white rounded-xl px-3 py-2 text-sm focus:outline-none w-full sm:w-40"
                   autoFocus
                 />
                 <button onClick={handleUpdateBand} className="p-2 bg-amber-400 text-black rounded-xl hover:bg-amber-500" title="Guardar">
@@ -849,43 +849,42 @@ export default function Dashboard() {
                 <Trash2 size={20} />
               </button>
             )}
+            <button
+              onClick={() => supabase.auth.signOut()}
+              className="p-2 bg-[#1A1A20] rounded-xl text-gray-400 hover:text-white transition-colors border border-gray-800"
+              title="Cerrar Sesión"
+            >
+              <LogOut size={20} />
+            </button>
           </div>
-          
-          <button
-            onClick={() => supabase.auth.signOut()}
-            className="p-2 bg-[#1A1A20] rounded-xl text-gray-400 hover:text-white transition-colors border border-gray-800"
-            title="Cerrar Sesión"
-          >
-            <LogOut size={20} />
-          </button>
         </div>
       </header>
 
-      {/* Tabs */}
-      <div className="flex gap-2 mb-6">
+      {/* Tabs - responsive wrap */}
+      <div className="flex flex-wrap gap-2 mb-6">
         <button 
           onClick={() => setActiveTab('songs')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-colors ${activeTab === 'songs' ? 'bg-amber-400 text-black font-bold' : 'bg-panel text-gray-400 hover:text-white'}`}
+          className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-medium transition-colors text-sm sm:font-medium ${activeTab === 'songs' ? 'bg-amber-400 text-black font-bold' : 'bg-panel text-gray-400 hover:text-white'}`}
         >
-          <Folder size={18} /> Repertorio
+          <Folder size={16} className="shrink-0" /> <span className="hidden sm:inline">Repertorio</span>
         </button>
         <button 
           onClick={() => setActiveTab('events')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-colors ${activeTab === 'events' ? 'bg-amber-400 text-black font-bold' : 'bg-panel text-gray-400 hover:text-white'}`}
+          className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-medium transition-colors text-sm sm:font-medium ${activeTab === 'events' ? 'bg-amber-400 text-black font-bold' : 'bg-panel text-gray-400 hover:text-white'}`}
         >
-          <Calendar size={18} /> Setlists / Eventos
+          <Calendar size={16} className="shrink-0" /> <span className="hidden sm:inline">Setlists</span>
         </button>
         <button 
           onClick={() => setActiveTab('shared')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-colors ${activeTab === 'shared' ? 'bg-blue-500 text-white font-bold' : 'bg-panel text-gray-400 hover:text-white'}`}
+          className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-medium transition-colors text-sm sm:font-medium ${activeTab === 'shared' ? 'bg-blue-500 text-white font-bold' : 'bg-panel text-gray-400 hover:text-white'}`}
         >
-          <Users size={18} /> Compartidos
+          <Users size={16} className="shrink-0" /> <span className="hidden sm:inline">Compartidos</span>
         </button>
         <button 
           onClick={() => setActiveTab('practice')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-colors ${activeTab === 'practice' ? 'bg-amber-400 text-black font-bold' : 'bg-panel text-gray-400 hover:text-white'}`}
+          className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-medium transition-colors text-sm sm:font-medium ${activeTab === 'practice' ? 'bg-amber-400 text-black font-bold' : 'bg-panel text-gray-400 hover:text-white'}`}
         >
-          <Brain size={18} /> Practicar
+          <Brain size={16} className="shrink-0" /> <span className="hidden sm:inline">Practicar</span>
         </button>
       </div>
 
@@ -1055,18 +1054,18 @@ export default function Dashboard() {
                         </div>
 
                         {firstSongId && (
-                          <div className="flex items-center gap-3 self-start md:self-auto flex-wrap">
-                            <div className="flex items-center gap-3 flex-1 min-w-[380px] flex-wrap">
+                          <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto flex-wrap">
+                            <div className="flex items-center gap-3 flex-1 min-w-0 flex-wrap">
                               <button
                                 onClick={() => navigate(`/practice/setlist/${evt.id}`)}
-                                className="flex-1 md:flex-none min-w-[180px] bg-green-500 text-black px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-600 transition-colors shadow-[0_0_15px_rgba(34,197,94,0.3)] text-sm"
+                                className="flex-1 sm:flex-none min-w-[160px] bg-green-500 text-black px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-600 transition-colors shadow-[0_0_15px_rgba(34,197,94,0.3)] text-sm"
                               >
                                 <Target size={20} className="fill-black" />
                                 Practicar Setlist
                               </button>
                               <button
                                 onClick={() => handleEventClick(firstSongId, setlistSongs)}
-                                className="flex-1 md:flex-none min-w-[180px] bg-amber-400 text-black px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-amber-500 transition-colors shadow-[0_0_15px_rgba(251,191,36,0.3)] text-sm"
+                                className="flex-1 sm:flex-none min-w-[160px] bg-amber-400 text-black px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-amber-500 transition-colors shadow-[0_0_15px_rgba(251,191,36,0.3)] text-sm"
                               >
                                 <Play size={20} className="fill-black" />
                                 Iniciar Show
@@ -1223,7 +1222,7 @@ export default function Dashboard() {
                       )}
                     </div>
                     
-                    <div className="flex items-center gap-3 pt-4 border-t border-gray-800">
+                    <div className="flex flex-col sm:flex-row items-center gap-3 pt-4 border-t border-gray-800">
                       <button
                         onClick={() => navigate(`/practice/${song.id}`)}
                         className="flex-1 bg-amber-400 text-black py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-amber-500 transition-colors shadow-[0_0_15px_rgba(251,191,36,0.2)]"
@@ -1232,7 +1231,7 @@ export default function Dashboard() {
                       </button>
                       <button
                         onClick={() => navigate(`/stage/${song.id}`)}
-                        className="px-4 py-3 bg-gray-800 text-white rounded-xl font-medium hover:bg-gray-700 transition-colors flex items-center gap-2"
+                        className="w-full sm:w-auto px-4 py-3 bg-gray-800 text-white rounded-xl font-medium hover:bg-gray-700 transition-colors flex items-center justify-center gap-2"
                       >
                         <Play size={18} /> Modo Escenario
                       </button>
@@ -1294,17 +1293,17 @@ export default function Dashboard() {
                         </div>
 
                         {firstSongId && (
-                          <div className="flex items-center gap-3 self-start md:self-auto flex-wrap">
+                          <div className="flex items-center gap-3 flex-wrap">
                             <button
                               onClick={() => navigate(`/practice/setlist/${evt.id}`)}
-                              className="flex-1 md:flex-none min-w-[180px] bg-green-500 text-black px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-600 transition-colors shadow-[0_0_15px_rgba(34,197,94,0.3)] text-sm"
+                              className="flex-1 sm:flex-none min-w-[160px] bg-green-500 text-black px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-600 transition-colors shadow-[0_0_15px_rgba(34,197,94,0.3)] text-sm"
                             >
                               <Target size={20} className="fill-black" />
                               Practicar Setlist
                             </button>
                             <button
                               onClick={() => handleEventClick(firstSongId, setlistSongs)}
-                              className="flex-1 md:flex-none min-w-[180px] bg-blue-500 text-white px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-600 transition-colors text-sm"
+                              className="flex-1 sm:flex-none min-w-[160px] bg-blue-500 text-white px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-600 transition-colors text-sm"
                             >
                               <Play size={20} className="fill-white" />
                               Ver Setlist
