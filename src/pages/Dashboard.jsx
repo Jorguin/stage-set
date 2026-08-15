@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { calculateRetentionFromProgress } from '../utils/spacedRepetition';
 import { parseSections, getSectionKey } from '../utils/songSections';
 import { LogOut, Play, Plus, Calendar, Folder, Mic2, MapPin, CheckSquare, Square, Trash2, Music2, Users, Settings, X, ChevronDown, Save, Edit, Brain, Target, GripVertical, Share2 } from 'lucide-react';
 
@@ -189,6 +190,7 @@ export default function Dashboard() {
   }
 
   async function fetchPracticeSongs(bandId) {
+    console.log('[fetchPracticeSongs] bandId:', bandId);
     const { data, error } = await supabase
       .from('songs')
       .select(`
@@ -205,14 +207,19 @@ export default function Dashboard() {
       .eq('band_id', bandId)
       .order('title');
 
+    console.log('[fetchPracticeSongs] data:', data, 'error:', error);
+
     if (error) {
       console.error('Error fetching practice songs:', error);
       return;
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
+const { data: { user } } = await supabase.auth.getUser();
+    console.log('[fetchPracticeSongs] user:', user);
     if (!user) return;
-
+    
+    console.log('[fetchPracticeSongs] songs found:', data?.length);
+    
     // Calculate retention using SAME function as repertoire tab for consistency
     const songsWithProgress = await Promise.all((data || []).map(async (song) => {
       // Parse ALL sections from song content

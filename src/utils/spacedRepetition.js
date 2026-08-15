@@ -40,6 +40,10 @@ export async function calculateRetentionFromProgress(songId, userId) {
       return 0; // No sections detected = 0% retention
     }
 
+    // DEBUG: Log what we're working with
+    console.log('[calculateRetentionFromProgress] songId:', songId, 'totalSections:', totalSections);
+    console.log('[calculateRetentionFromProgress] allSections:', allSections.map(s => s.displayName));
+
     // Get section progress for this song/user from DB
     const { data: progressData } = await supabase
       .from('song_section_progress')
@@ -56,6 +60,9 @@ export async function calculateRetentionFromProgress(songId, userId) {
       });
     }
 
+    // DEBUG: Log progress map
+    console.log('[calculateRetentionFromProgress] progressMap keys:', Object.keys(progressMap));
+
     // Count completed sections by checking each detected section against progress
     let completedSections = 0;
     let recentPracticeCount = 0;
@@ -64,6 +71,8 @@ export async function calculateRetentionFromProgress(songId, userId) {
     allSections.forEach((section, index) => {
       const key = getSectionKey(section, index);
       const progress = progressMap[key];
+      
+      console.log('[calculateRetentionFromProgress] Checking:', section.displayName, 'key:', key, 'progress:', progress);
       
       if (progress?.is_completed) {
         completedSections++;
@@ -96,7 +105,21 @@ export async function calculateRetentionFromProgress(songId, userId) {
     const stalePenalty = Math.round((staleSectionsCount / totalSections) * 30);
     retention = Math.max(0, retention - stalePenalty);
 
-    return Math.max(0, Math.min(100, retention));
+    const finalRetention = Math.max(0, Math.min(100, retention));
+    
+    // DEBUG: Log final calculation
+    console.log('[calculateRetentionFromProgress] FINAL:', {
+      totalSections,
+      completedSections,
+      recentPracticeCount,
+      staleSectionsCount,
+      baseRetention: Math.round((completedSections / totalSections) * 100),
+      recentBonus,
+      stalePenalty,
+      finalRetention
+    });
+
+    return finalRetention;
 
   } catch (error) {
     console.error('Error calculating retention from progress:', error);

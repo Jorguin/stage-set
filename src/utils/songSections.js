@@ -40,6 +40,9 @@ export function parseSections(content) {
     }
   });
   
+  // DEBUG: Log parsed sections
+  console.log('[parseSections] Parsed sections:', sections.map(s => `${s.displayName} (line ${s.lineIndex})`));
+  
   return sections;
 }
 
