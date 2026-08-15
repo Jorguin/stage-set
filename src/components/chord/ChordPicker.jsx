@@ -59,13 +59,14 @@ export function ChordPicker({ onInsertChord, triggerRef }) {
         >
           <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-800">
             <span className="text-xs font-medium text-gray-400">Insertar acorde</span>
-            <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-white"><X size={16} /></button>
+            <button type="button" onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-white"><X size={16} /></button>
           </div>
 
           {/* Root note tabs */}
           <div className="flex flex-wrap gap-1 mb-3 overflow-x-auto pb-2">
             {CHORD_GROUPS.map(({ root }) => (
               <button
+                type="button"
                 key={root}
                 onClick={() => setActiveGroup(root)}
                 onMouseDown={(e) => e.stopPropagation()}
@@ -84,6 +85,7 @@ export function ChordPicker({ onInsertChord, triggerRef }) {
           <div className="flex flex-wrap gap-1">
             {CHORD_GROUPS.find(g => g.root === activeGroup)?.chords.map(chord => (
               <button
+                type="button"
                 key={chord}
                 onClick={() => insertChord(chord)}
                 onMouseDown={(e) => e.stopPropagation()}
@@ -100,6 +102,7 @@ export function ChordPicker({ onInsertChord, triggerRef }) {
             <div className="flex flex-wrap gap-1">
               {['C', 'G', 'D', 'A', 'E', 'F', 'Am', 'Em', 'Dm', 'Bm', 'F#m', 'C#m', 'G#m', 'D#m'].map(chord => (
                 <button
+                  type="button"
                   key={chord}
                   onClick={() => insertChord(chord)}
                   onMouseDown={(e) => e.stopPropagation()}

@@ -59,7 +59,8 @@ function isSectionMarker(line) {
   return parseSectionLine(line) !== null;
 }
 
-// Check if a line is PURELY chords (no lyrics words)
+// Check if a line is primarily chords (no lyrics words)
+// Tolerant: requires >= 70% chord tokens and at least 2 chords
 export function isChordLine(line) {
   const trimmed = line.trim();
   if (!trimmed) return false;
@@ -67,13 +68,16 @@ export function isChordLine(line) {
   // Skip section markers (but allow trailing chords on section lines - handled separately)
   if (isSectionMarker(trimmed)) return false;
   
-  // Split by whitespace and check if ALL tokens are chords
+  // Split by whitespace
   const tokens = trimmed.split(/\s+/).filter(t => t.length > 0);
   if (tokens.length < 2) return false; // Need at least 2 chords to be a chord line
   
-  // ALL tokens must be valid chords (not just 60%)
-  const allChords = tokens.every(t => isChord(t));
-  return allChords;
+  // Count chord tokens
+  const chordTokens = tokens.filter(t => isChord(t));
+  const chordRatio = chordTokens.length / tokens.length;
+  
+  // At least 70% chords AND at least 2 chord tokens
+  return chordRatio >= 0.7 && chordTokens.length >= 2;
 }
 
 // Parse a chord line into array of {chord, column}
@@ -92,21 +96,34 @@ export function parseChordLine(line) {
   return chords;
 }
 
-// Align chords to lyrics based on column positions
+// Align chords to lyrics using word-based alignment (more robust than column positions)
 export function alignChordsToLyrics(chords, lyricLine) {
   if (!chords.length || !lyricLine.trim()) return lyricLine;
   
-  let result = '';
-  let lastEnd = 0;
+  // Split lyric line into words with their positions
+  const words = [];
+  for (const match of lyricLine.matchAll(/\S+/g)) {
+    words.push({ text: match[0], start: match.index ?? 0, end: (match.index ?? 0) + match[0].length });
+  }
   
-  // Add chords before their aligned words
+  if (!words.length) return lyricLine;
+  
+  let result = '';
+  let wordIdx = 0;
+  
   chords.forEach(({ chord, column }) => {
-    // Find the word in lyricLine at or near this column
-    // We'll insert chord before the word that starts at/after this column
-    const beforeText = lyricLine.substring(lastEnd, column);
-    result += beforeText;
+    // Find the word closest to this chord's column position
+    while (wordIdx < words.length - 1 && words[wordIdx + 1].start <= column) {
+      wordIdx++;
+    }
+    
+    const targetWord = words[wordIdx];
+    const insertPos = targetWord.start;
+    
+    // Add text up to this word
+    result += lyricLine.substring(lastEnd, insertPos);
     result += `[${chord}]`;
-    lastEnd = column;
+    lastEnd = insertPos;
   });
   
   // Add remaining text
