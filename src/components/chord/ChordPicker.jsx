@@ -25,10 +25,10 @@ export function ChordPicker({ onInsertChord, triggerRef }) {
 
   useEffect(() => {
     function handleClickOutside(e) {
-      if (pickerRef.current && !pickerRef.current.contains(e.target) &&
-          triggerButtonRef.current && !triggerButtonRef.current.contains(e.target)) {
-        setIsOpen(false);
-      }
+      // Don't close if clicking inside picker or on trigger button
+      if (pickerRef.current && pickerRef.current.contains(e.target)) return;
+      if (triggerButtonRef.current && triggerButtonRef.current.contains(e.target)) return;
+      setIsOpen(false);
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -54,6 +54,7 @@ export function ChordPicker({ onInsertChord, triggerRef }) {
       {isOpen && (
         <div
           ref={pickerRef}
+          onMouseDown={(e) => e.stopPropagation()}
           className="absolute bottom-full left-0 mb-2 w-96 max-h-[400px] overflow-y-auto bg-panel border border-gray-700 rounded-xl shadow-xl p-3 z-50 animate-slide-up"
         >
           <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-800">
@@ -67,6 +68,7 @@ export function ChordPicker({ onInsertChord, triggerRef }) {
               <button
                 key={root}
                 onClick={() => setActiveGroup(root)}
+                onMouseDown={(e) => e.stopPropagation()}
                 className={`px-2 py-1 text-xs rounded transition-colors ${
                   activeGroup === root
                     ? 'bg-amber-500 text-black font-bold'
@@ -84,6 +86,7 @@ export function ChordPicker({ onInsertChord, triggerRef }) {
               <button
                 key={chord}
                 onClick={() => insertChord(chord)}
+                onMouseDown={(e) => e.stopPropagation()}
                 className="px-2 py-1 text-xs bg-gray-800 text-white rounded hover:bg-amber-500 hover:text-black transition-colors font-mono"
               >
                 {chord}
@@ -99,6 +102,7 @@ export function ChordPicker({ onInsertChord, triggerRef }) {
                 <button
                   key={chord}
                   onClick={() => insertChord(chord)}
+                  onMouseDown={(e) => e.stopPropagation()}
                   className="px-2 py-1 text-xs bg-gray-800 text-white rounded hover:bg-amber-500 hover:text-black transition-colors font-mono"
                 >
                   {chord}

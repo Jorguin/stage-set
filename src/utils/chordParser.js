@@ -9,8 +9,15 @@
  * [C]Amazing [G]grace [Am]how [F]sweet the sound
  */
 
-// Chord regex - matches valid chord symbols
-const CHORD_REGEX = /^[A-G][#b]?(?:m|maj|min|dim|aug|sus|add|[0-9])?(?:\/[A-G][#b]?)?$/;
+// Chord regex - matches valid chord symbols (including complex ones like B(add2), E/G#, C#m7, etc.)
+const CHORD_REGEX = /^[A-G][#b]?(?:m(?:aj|in)?|maj|dim|aug|sus[0-9]*|add[0-9]*|[0-9]+)(?:\([^)]+\))?(?:\/[A-G][#b]?(?:m(?:aj|in)?|maj|dim|aug|sus[0-9]*|add[0-9]*|[0-9]+)?(?:\([^)]+\))?)?$/;
+
+// Simpler fallback regex for basic chords
+const SIMPLE_CHORD_REGEX = /^[A-G][#b]?(?:m|maj|min|dim|aug|sus|add|[0-9])?(?:\([^)]+\))?(?:\/[A-G][#b]?)?$/;
+
+function isChord(token) {
+  return CHORD_REGEX.test(token) || SIMPLE_CHORD_REGEX.test(token);
+}
 
 // Known section markers that should NOT be treated as chord lines
 const SECTION_MARKERS = [
@@ -34,7 +41,7 @@ function parseSectionLine(line) {
     
     if (SECTION_MARKERS.some(m => marker === m || marker.startsWith(m + ' '))) {
       // Parse trailing chords if any
-      const trailingChords = afterColon ? afterColon.split(/\s+/).filter(t => CHORD_REGEX.test(t)) : [];
+      const trailingChords = afterColon ? afterColon.split(/\s+/).filter(t => isChord(t)) : [];
       return { marker: trimmed.substring(0, colonIndex + 1), trailingChords, isMarker: true };
     }
   }
@@ -65,7 +72,7 @@ export function isChordLine(line) {
   if (tokens.length < 2) return false; // Need at least 2 chords to be a chord line
   
   // ALL tokens must be valid chords (not just 60%)
-  const allChords = tokens.every(t => CHORD_REGEX.test(t));
+  const allChords = tokens.every(t => isChord(t));
   return allChords;
 }
 
@@ -77,7 +84,7 @@ export function parseChordLine(line) {
     const token = match[0];
     const startCol = match.index ?? 0;
     
-    if (CHORD_REGEX.test(token)) {
+    if (isChord(token)) {
       chords.push({ chord: token, column: startCol });
     }
   }
