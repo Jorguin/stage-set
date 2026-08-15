@@ -209,22 +209,27 @@ export default function Dashboard() {
       console.error('Error fetching practice songs:', error);
       return;
     }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
     
-    // Calculate progress for each song
-    const songsWithProgress = (data || []).map(song => {
+    // Calculate retention using SAME function as repertoire tab for consistency
+    const songsWithProgress = await Promise.all((data || []).map(async (song) => {
       const sections = song.song_section_progress || [];
       const totalSections = sections.length;
       const completedSections = sections.filter(s => s.is_completed).length;
-      const progress = totalSections > 0 ? Math.round((completedSections / totalSections) * 100) : 0;
+      
+      // Use same retention calculation as repertoire tab (includes recency bonus/stale penalty)
+      const retention = await calculateRetentionFromProgress(song.id, user.id);
       
       return {
         ...song,
-        practiceProgress: progress,
+        practiceProgress: retention,
         totalSections,
         completedSections,
         sections: sections.sort((a, b) => a.section_order - b.section_order)
       };
-    });
+    }));
     
     setPracticeSongs(songsWithProgress);
   }

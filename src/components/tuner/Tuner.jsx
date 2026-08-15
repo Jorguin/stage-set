@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Mic, MicOff, Volume2, VolumeX, Settings, X, ChevronLeft, ChevronRight, Guitar, Music } from 'lucide-react';
-import pitchy from 'pitchy';
+import { PitchDetector } from 'pitchy';
 
 const GUITAR_STRINGS = [
   { note: 'E2', name: '6ª (E)', frequency: 82.41, color: '#ff6b6b' },
@@ -32,6 +32,7 @@ export function Tuner({ onClose, defaultInstrument = 'guitar' }) {
   const [targetString, setTargetString] = useState(0);
   const [audioContext, setAudioContext] = useState(null);
   const [permissionDenied, setPermissionDenied] = useState(false);
+  const [hasPermission, setHasPermission] = useState(false);
   const [noiseLevel, setNoiseLevel] = useState(0);
   
   const mediaStreamRef = useRef(null);
@@ -39,12 +40,13 @@ export function Tuner({ onClose, defaultInstrument = 'guitar' }) {
   const dataArrayRef = useRef(null);
   const animationRef = useRef(null);
   const pitchDetectorRef = useRef(null);
+  const isListeningRef = useRef(false);
 
   const strings = STANDARD_TUNINGS[instrument];
   const targetNote = strings[targetString];
 
   // Initialize audio context
-  const initAudio = useCallback(async () => {
+const initAudio = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: { 
@@ -56,11 +58,14 @@ export function Tuner({ onClose, defaultInstrument = 'guitar' }) {
       });
       
       mediaStreamRef.current = stream;
+      console.log('Audio track:', stream.getAudioTracks()[0]);
+      console.log('Track enabled:', stream.getAudioTracks()[0]?.enabled, 'readyState:', stream.getAudioTracks()[0]?.readyState);
       const ctx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100 });
+      if (ctx.state === 'suspended') await ctx.resume();
       setAudioContext(ctx);
       
       const analyser = ctx.createAnalyser();
-      analyser.fftSize = 2048;
+      analyser.fftSize = 4096;
       analyser.smoothingTimeConstant = 0.3;
       analyserRef.current = analyser;
       
@@ -69,18 +74,25 @@ export function Tuner({ onClose, defaultInstrument = 'guitar' }) {
       
       const source = ctx.createMediaStreamSource(stream);
       source.connect(analyser);
+      analyser.connect(ctx.destination); // Necesario en algunos navegadores
+      console.log('AudioContext state:', ctx.state, 'Analyser connected');
       
-      pitchDetectorRef.current = pitchy;
+      pitchDetectorRef.current = PitchDetector.forFloat32Array(2048);
+      pitchDetectorRef.current.clarityThreshold = 0.7;
       setPermissionDenied(false);
+      setHasPermission(true);
       
+      return ctx; // Return context for chaining
     } catch (err) {
       console.error('Error accessing microphone:', err);
       setPermissionDenied(true);
+      throw err;
     }
   }, []);
 
   const stopListening = useCallback(() => {
     setIsListening(false);
+    isListeningRef.current = false;
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
     }
@@ -88,7 +100,7 @@ export function Tuner({ onClose, defaultInstrument = 'guitar' }) {
       mediaStreamRef.current.getTracks().forEach(track => track.stop());
       mediaStreamRef.current = null;
     }
-    if (audioContext) {
+    if (audioContext && audioContext.state !== 'closed') {
       audioContext.close();
       setAudioContext(null);
     }
@@ -96,9 +108,9 @@ export function Tuner({ onClose, defaultInstrument = 'guitar' }) {
 
   const startListening = useCallback(() => {
     if (!audioContext) {
-      initAudio().then(() => {
-        if (audioContext) startDetection();
-      });
+      initAudio().then((ctx) => {
+        if (ctx) startDetection();
+      }).catch(() => {});
     } else {
       startDetection();
     }
@@ -106,19 +118,21 @@ export function Tuner({ onClose, defaultInstrument = 'guitar' }) {
 
   const startDetection = useCallback(() => {
     setIsListening(true);
+    isListeningRef.current = true;
     detectPitch();
   }, []);
 
   const detectPitch = useCallback(() => {
-    if (!isListening || !analyserRef.current || !dataArrayRef.current) return;
+    if (!isListeningRef.current || !analyserRef.current || !dataArrayRef.current) return;
 
     const analyser = analyserRef.current;
     const dataArray = dataArrayRef.current;
     
-    analyser.getByteTimeDomainData(dataArray);
-    
-    // Calculate RMS for noise level
-    let sum = 0;
+analyser.getByteTimeDomainData(dataArray);
+      console.log('Byte data sample:', dataArray[0], dataArray[100], dataArray[500], dataArray[1000]);
+      
+      // Calculate RMS for noise level
+      let sum = 0;
     for (let i = 0; i < dataArray.length; i++) {
       const val = (dataArray[i] - 128) / 128;
       sum += val * val;
@@ -126,14 +140,15 @@ export function Tuner({ onClose, defaultInstrument = 'guitar' }) {
     const rms = Math.sqrt(sum / dataArray.length);
     setNoiseLevel(rms);
 
-    // Convert to Float32Array for pitchy
+    // Convert to Float32Array for PitchDetector
     const buffer = new Float32Array(dataArray.length);
     for (let i = 0; i < dataArray.length; i++) {
       buffer[i] = (dataArray[i] - 128) / 128;
     }
 
     try {
-      const [pitch, clarity] = pitchy.detectPitch(buffer, 44100);
+      const [pitch, clarity] = pitchDetectorRef.current.findPitch(buffer, 44100);
+      console.log('Pitch:', pitch, 'Clarity:', clarity, 'RMS:', rms);
       
       if (clarity > 0.3 && pitch > 20 && pitch < 2000) {
         setDetectedFreq(pitch);
@@ -170,7 +185,9 @@ export function Tuner({ onClose, defaultInstrument = 'guitar' }) {
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach(t => t.stop());
       }
-      if (audioContext) audioContext.close();
+      if (audioContext && audioContext.state !== 'closed') {
+        audioContext.close();
+      }
     };
   }, [audioContext]);
 
@@ -210,7 +227,7 @@ export function Tuner({ onClose, defaultInstrument = 'guitar' }) {
     );
   }
 
-  return (
+return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black/95">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-panel">
@@ -231,33 +248,40 @@ export function Tuner({ onClose, defaultInstrument = 'guitar' }) {
           </div>
           <button 
             onClick={isListening ? stopListening : startListening}
-            className={`p-2 rounded-xl transition-colors ${isListening 
-              ? 'bg-red-500 text-white' 
-              : 'bg-green-500 text-white'}`}
+            disabled={permissionDenied}
+            className={`p-2 rounded-xl transition-colors ${permissionDenied 
+              ? 'bg-red-500 text-white cursor-not-allowed opacity-50' 
+              : hasPermission 
+                ? isListening 
+                  ? 'bg-amber-500 text-white' 
+                  : 'bg-green-500 text-white'
+                : 'bg-gray-700 text-gray-400'}`}
           >
             {isListening ? <MicOff size={24} /> : <Mic size={24} />}
           </button>
         </div>
+      </div>
 
-        {/* Noise Level Indicator */}
-        <div className="px-4 py-2 border-b border-gray-700 bg-panel/50">
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-amber-400 transition-all duration-100"
-                style={{ width: `${Math.min(noiseLevel * 100, 100)}%` }}
-              />
-            </div>
-            <span className="text-xs text-gray-400 w-16 text-right">
-              {noiseLevel > 0.01 ? 'Ruido detectado' : 'Silencio'}
-            </span>
+      {/* Noise Level Indicator */}
+      <div className="px-4 py-2 border-b border-gray-700 bg-panel/50">
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-amber-400 transition-all duration-100"
+              style={{ width: `${Math.min(noiseLevel * 100, 100)}%` }}
+            />
           </div>
+          <span className="text-xs text-gray-400 w-16 text-right">
+            {noiseLevel > 0.01 ? 'Ruido detectado' : 'Silencio'}
+          </span>
         </div>
+      </div>
 
-        {/* Target String Selector */}
-        <div className="px-4 py-3 border-b border-gray-700 bg-panel/50">
-          <div className="flex items-center justify-center gap-1 overflow-x-auto pb-2">
-            {strings.map((string, index) => (
+      {/* Target String Selector */}
+      <div className="px-4 py-3 border-b border-gray-700 bg-panel/50">
+        <div className="flex items-center justify-center gap-1 overflow-x-auto pb-2">
+          {strings.map((string, index) => {
+            return (
               <button
                 key={string.note}
                 onClick={() => setTargetString(index)}
@@ -271,106 +295,109 @@ export function Tuner({ onClose, defaultInstrument = 'guitar' }) {
                 <br />
                 <span className="text-xs">{string.frequency.toFixed(1)}Hz</span>
               </button>
-            ))}
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Main Tuner Display */}
+      <div className="flex-1 flex flex-col items-center justify-center p-4">
+        {/* Target Note Display */}
+        <div className="mb-8">
+          <div className="text-xs text-gray-500 mb-1">Cuerda objetivo</div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-7xl md:text-9xl font-bold font-mono text-white">
+              {targetNote?.note.replace(/[0-9]/g, '') || '--'}
+            </span>
+            <div className="text-2xl text-gray-400 font-mono">
+              {targetNote?.note.match(/\d+/) || ''}
+            </div>
+          </div>
+          <div className="text-sm text-gray-500 mt-1">
+            {targetNote ? `${targetNote.name} • ${targetNote.frequency.toFixed(1)} Hz` : ''}
           </div>
         </div>
 
-        {/* Main Tuner Display */}
-        <div className="flex-1 flex flex-col items-center justify-center p-4">
-          {/* Target Note Display */}
-          <div className="mb-8">
-            <div className="text-xs text-gray-500 mb-1">Cuerda objetivo</div>
+        {/* Detected Note Display */}
+        <div className="mb-8">
+          <div className="text-xs text-gray-500 mb-1">Detectado</div>
+          {detectedNote ? (
             <div className="flex items-baseline gap-2">
-              <span className="text-7xl md:text-9xl font-bold font-mono text-white">
-                {targetNote?.note.replace(/[0-9]/g, '') || '--'}
-              </div>
-              <div className="text-2xl text-gray-400 font-mono">
-                {targetNote?.note.match(/\d+/) || ''}
+              <span className="text-5xl md:text-7xl font-bold font-mono text-amber-400">
+                {detectedNote.name}
+              </span>
+              <div className="text-lg text-gray-400 font-mono">
+                {detectedNote.octave}
               </div>
             </div>
+          ) : (
+            <div className="text-5xl text-gray-700">--</div>
+          )}
+          {detectedNote && (
             <div className="text-sm text-gray-500 mt-1">
-              {targetNote ? `${targetNote.name} • ${targetNote.frequency.toFixed(1)} Hz` : ''}
+              {detectedFreq.toFixed(1)} Hz • {detectedNote.cents > 0 ? '+' : ''}{detectedNote.cents} cents
             </div>
-          </div>
+          )}
+        </div>
 
-          {/* Detected Note Display */}
-          <div className="mb-8">
-            <div className="text-xs text-gray-500 mb-1">Detectado</div>
-            {detectedNote ? (
-              <div className="flex items-baseline gap-2">
-                <span className="text-5xl md:text-7xl font-bold font-mono text-amber-400">
-                  {detectedNote.name}
-                </div>
-                <div className="text-lg text-gray-400 font-mono">
-                  {detectedNote.octave}
-                </div>
-              </div>
-            ) : (
-              <div className="text-5xl text-gray-700">--</div>
-            )}
-            {detectedNote && (
-              <div className="text-sm text-gray-500 mt-1">
-                {detectedFreq.toFixed(1)} Hz • {detectedNote.cents > 0 ? '+' : ''}{detectedNote.cents} cents
-              </div>
-            )}
-          </div>
-
-          {/* Tuning Meter */}
-          <div className="w-full max-w-md">
-            <div className="relative h-8 bg-gray-800 rounded-full overflow-hidden mb-2">
-              {/* Center line */}
-              <div className="absolute left-1/2 top-0 bottom-0 w-px bg-amber-400" style={{ transform: 'translateX(-50%)' }} />
-              
-              {/* Cents markers */}
-              <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-600" style={{ transform: 'translateX(-50%) translateX(-50%)' } />
-              <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-600" style={{ transform: 'translateX(-50%) translateX(50%)' } />
-              
-              {/* Needle */}
-              <div 
-                className="absolute top-0 bottom-0 w-px bg-amber-400 transition-all duration-200"
-                style={{ 
-                  left: '50%', 
-                  transform: `translateX(-50%) translateX(${Math.max(-50, Math.min(50, centsDiff / 2))}%)`,
-                  background: centsDiff > 10 ? '#ef4444' : centsDiff < -10 ? '#3b82f6' : '#fbbf24'
-                } 
-              />
-            </div>
+        {/* Tuning Meter */}
+        <div className="w-full max-w-md">
+          <div className="relative h-8 bg-gray-800 rounded-full overflow-hidden mb-2">
+            {/* Center line */}
+            <div className="absolute left-1/2 top-0 bottom-0 w-px bg-amber-400" style={{ transform: 'translateX(-50%)' }}></div>
             
-            {/* Cents labels */}
-            <div className="flex justify-between text-xs text-gray-500 px-2">
-              <span>-50</span>
-              <span className="text-amber-400 font-bold">0</span>
-              <span>+50</span>
-            </div>
-
-            {/* Status Text */}
-            <div className="text-center mt-4">
-              {Math.abs(centsDiff) < 2 ? (
-                <p className="text-green-400 text-lg font-bold">✓ ¡Afinado!</p>
-              ) : centsDiff > 0 ? (
-                <p className="text-blue-400 text-lg font-bold">♭ Demasiado agudo - Afloja la cuerda</p>
-              ) : (
-                <p className="text-red-400 text-lg font-bold">♯ Demasiado grave - Tensa la cuerda</p>
-              )}
-            </div>
+            {/* Cents markers */}
+            <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-600" style={{ transform: 'translateX(-50%) translateX(-50%)' }}></div>
+            <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-600" style={{ transform: 'translateX(-50%) translateX(50%)' }}></div>
+            
+            {/* Needle */}
+            <div 
+              className="absolute top-0 bottom-0 w-px bg-amber-400 transition-all duration-200"
+              style={{ 
+                left: '50%', 
+                transform: `translateX(-50%) translateX(${Math.max(-50, Math.min(50, centsDiff / 2))}%)`,
+                background: centsDiff > 10 ? '#ef4444' : centsDiff < -10 ? '#3b82f6' : '#fbbf24'
+              }} 
+            ></div>
           </div>
+          
+          {/* Cents labels */}
+          <div className="flex justify-between text-xs text-gray-500 px-2">
+            <span>-50</span>
+            <span className="text-amber-400 font-bold">0</span>
+            <span>+50</span>
+          </div>
+
+          {/* Status Text */}
+          <div className="text-center mt-4">
+            {Math.abs(centsDiff) < 2 ? (
+              <p className="text-green-400 text-lg font-bold">✓ ¡Afinado!</p>
+            ) : centsDiff > 0 ? (
+              <p className="text-blue-400 text-lg font-bold">♭ Demasiado agudo - Afloja la cuerda</p>
+            ) : (
+              <p className="text-red-400 text-lg font-bold">♯ Demasiado grave - Tensa la cuerda</p>
+            )}
+          </div>
+        </div>
 
         {/* Quick String Buttons */}
         <div className="p-4 border-t border-gray-700 bg-panel/50">
           <div className="flex flex-wrap justify-center gap-2">
-            {strings.map((string, index) => (
-              <button
-                key={string.note}
-                onClick={() => setTargetString(index)}
-                className={`px-3 py-1 rounded-lg text-xs font-mono transition-all ${
-                  index === targetString
-                    ? 'bg-amber-400 text-black font-bold'
-                    : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                }`}
-              >
-                {string.name}
-              </button>
-            )}
+            {strings.map((string, index) => {
+              return (
+                <button
+                  key={string.note}
+                  onClick={() => setTargetString(index)}
+                  className={`px-3 py-1 rounded-lg text-xs font-mono transition-all ${
+                    index === targetString
+                      ? 'bg-amber-400 text-black font-bold'
+                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                  }`}
+                >
+                  {string.name}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>

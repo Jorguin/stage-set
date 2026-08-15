@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { parseLine } from '../utils/musicLogic';
-import { ArrowLeft, Minus, Plus, RefreshCw, Settings, X, CheckSquare, Target, ChevronLeft, ChevronRight } from 'lucide-react';
+import { calculateRetentionFromProgress } from '../utils/spacedRepetition';
+import { ArrowLeft, Minus, Plus, RefreshCw, Settings, X, CheckSquare, Target, ChevronLeft, ChevronRight, Brain } from 'lucide-react';
 
 export default function PracticeView() {
   const { id } = useParams();
@@ -16,6 +17,7 @@ export default function PracticeView() {
   const [showSettings, setShowSettings] = useState(false);
   const [fontSize, setFontSize] = useState(18);
   const [highContrast, setHighContrast] = useState(false);
+  const [retention, setRetention] = useState(0);
 
   const scrollRef = useRef(null);
   const practiceSessionRef = useRef(null);
@@ -85,6 +87,10 @@ export default function PracticeView() {
           });
         }
         setSectionProgress(progressMap);
+
+        // Calculate retention using SAME function as Dashboard for consistency
+        const retentionValue = await calculateRetentionFromProgress(id, user.id);
+        setRetention(retentionValue);
 
         // Create practice session
         const { data: sessionData } = await supabase
@@ -185,6 +191,10 @@ export default function PracticeView() {
         await supabase.rpc('increment_mastery', { p_song_id: id, p_user_id: user.id });
       }
 
+      // Recalculate retention after section change for real-time sync with Dashboard
+      const newRetention = await calculateRetentionFromProgress(id, user.id);
+      setRetention(newRetention);
+
     } catch (error) {
       console.error('Error toggling section:', error);
     }
@@ -236,6 +246,12 @@ export default function PracticeView() {
           <div className="bg-panel px-4 py-2 rounded-full font-bold text-lg pointer-events-auto shadow-lg flex flex-col items-center min-w-[200px]">
             <Target size={20} className="text-amber-400" />
             {song.title}
+            <div className="flex items-center gap-1 text-xs mt-1">
+              <Brain size={12} className={retention >= 80 ? 'text-green-500' : retention >= 40 ? 'text-amber-400' : 'text-red-500'} />
+              <span className={retention >= 80 ? 'text-green-500' : retention >= 40 ? 'text-amber-400' : 'text-red-500'}>
+                {retention}%
+              </span>
+            </div>
           </div>
         </div>
 
