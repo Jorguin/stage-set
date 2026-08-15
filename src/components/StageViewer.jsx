@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { parseLine } from '../utils/musicLogic';
-import { ArrowLeft, Minus, Plus, Play, Pause, RefreshCw, FileText, Contrast, Zap, SkipBack, SkipForward, Settings, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Minus, Plus, Play, Pause, RefreshCw, FileText, Contrast, Zap, SkipBack, SkipForward, Settings, X, ChevronUp, ChevronDown, Menu } from 'lucide-react';
 
 export default function StageViewer() {
   const { id } = useParams();
@@ -51,6 +51,7 @@ export default function StageViewer() {
 
   // Settings panel
   const [showSettings, setShowSettings] = useState(false);
+const [showSettingsModal, setShowSettingsModal] = useState(false);
   
   // Bottom controls visibility (mobile responsive)
   const [showBottomControls, setShowBottomControls] = useState(false);
@@ -563,142 +564,144 @@ export default function StageViewer() {
       </div>
 
       {/* Settings Panel */}
-      {showSettings && (
-        <div className="absolute top-28 left-4 right-4 md:left-auto md:right-4 md:w-80 bg-panel rounded-2xl shadow-2xl border border-gray-700 p-4 z-30 pointer-events-auto animate-slide-down">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-white">Ajustes de Escenario</h3>
-            <button onClick={() => setShowSettings(false)} className="text-gray-400 hover:text-white"><X size={20} /></button>
-          </div>
-          
-          <div className="space-y-4">
-            {/* Font Size */}
-            <div>
-              <label className="flex items-center justify-between text-sm mb-2">
-                <span className="text-gray-300">Tamaño fuente</span>
-                <span className="text-white font-mono">{fontSize}px</span>
-              </label>
-              <input
-                type="range"
-                min="12"
-                max="32"
-                value={fontSize}
-                onChange={(e) => setFontSize(Number(e.target.value))}
-                className="w-full h-2 bg-gray-800 rounded-lg appearance-none accent-amber-400 cursor-pointer"
-              />
+      {/* Settings Modal */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setShowSettingsModal(false)}>
+          <div className="bg-panel rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto animate-slide-down" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-gray-700 sticky top-0 bg-panel z-10">
+              <h3 className="font-bold text-white">Ajustes de Escenario</h3>
+              <button onClick={() => setShowSettingsModal(false)} className="text-gray-400 hover:text-white"><X size={24} /></button>
             </div>
-
-            {/* High Contrast */}
-            <div className="flex items-center justify-between">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-gray-300 truncate">Alto contraste</p>
-                <p className="text-xs text-gray-500 truncate">Para escenarios con luces fuertes</p>
+            <div className="p-4 space-y-6 max-h-[70vh] overflow-y-auto">
+              {/* Font Size */}
+              <div>
+                <label className="flex items-center justify-between text-sm mb-2">
+                  <span className="text-gray-300">Tamaño fuente</span>
+                  <span className="text-white font-mono">{fontSize}px</span>
+                </label>
+                <input
+                  type="range"
+                  min="12"
+                  max="32"
+                  value={fontSize}
+                  onChange={(e) => setFontSize(Number(e.target.value))}
+                  className="w-full h-2 bg-gray-800 rounded-lg appearance-none accent-amber-400 cursor-pointer"
+                />
               </div>
-              <button
-                onClick={() => setHighContrast(!highContrast)}
-                className={`relative w-16 h-9 rounded-full transition-colors flex-shrink-0 ${highContrast ? 'bg-amber-400' : 'bg-gray-700'}`}
-              >
-                <span className={`absolute top-0.5 left-0.5 transition-transform duration-200 ${highContrast ? 'translate-x-7' : 'translate-x-0'} w-8 h-8 bg-white rounded-full shadow-md`} />
-              </button>
-            </div>
 
-            {/* Visual Metronome */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
+              {/* High Contrast */}
+              <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-300 truncate">Metrónomo</p>
-                  <p className="text-xs text-gray-500 truncate">Pulso visual y sonido configurable</p>
+                  <p className="text-sm text-gray-300 truncate">Alto contraste</p>
+                  <p className="text-xs text-gray-500 truncate">Para escenarios con luces fuertes</p>
                 </div>
                 <button
-                  onClick={() => setShowMetronome(!showMetronome)}
-                  className={`relative w-16 h-9 rounded-full transition-colors flex-shrink-0 ${showMetronome ? 'bg-amber-400' : 'bg-gray-700'}`}
+                  onClick={() => setHighContrast(!highContrast)}
+                  className={`relative w-16 h-9 rounded-full transition-colors flex-shrink-0 ${highContrast ? 'bg-amber-400' : 'bg-gray-700'}`}
                 >
-                  <span className={`absolute top-0.5 left-0.5 transition-transform duration-200 ${showMetronome ? 'translate-x-7' : 'translate-x-0'} w-8 h-8 bg-white rounded-full shadow-md`} />
+                  <span className={`absolute top-0.5 left-0.5 transition-transform duration-200 ${highContrast ? 'translate-x-7' : 'translate-x-0'} w-8 h-8 bg-white rounded-full shadow-md`} />
                 </button>
               </div>
-              {showMetronome && (
-                <div className="space-y-4">
-                  {/* BPM */}
-                  <div>
-                    <label className="flex items-center justify-between text-sm mb-2">
-                      <span className="text-gray-300">BPM</span>
-                      <span className="text-white font-mono">{bpm}</span>
-                    </label>
-                    <input
-                      type="range"
-                      min="40"
-                      max="200"
-                      value={bpm}
-                      onChange={(e) => setBpm(Number(e.target.value))}
-                      className="w-full h-2 bg-gray-800 rounded-lg appearance-none accent-amber-400 cursor-pointer"
-                    />
-                  </div>
 
-                  {/* Time Signature */}
-                  <div>
-                    <label className="flex items-center justify-between text-sm mb-2">
-                      <span className="text-gray-300">Compás</span>
-                      <span className="text-white font-mono">{timeSignature}</span>
-                    </label>
-                    <select
-                      value={timeSignature}
-                      onChange={(e) => setTimeSignature(e.target.value)}
-                      className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-amber-400"
-                    >
-                      <option value="4/4">4/4 (Cuatro por cuatro)</option>
-                      <option value="3/4">3/4 (Vals)</option>
-                      <option value="6/8">6/8 (Compuesto)</option>
-                      <option value="2/4">2/4 (Marcha)</option>
-                      <option value="5/4">5/4 (Irregular)</option>
-                      <option value="7/8">7/8 (Irregular)</option>
-                    </select>
+              {/* Visual Metronome */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-300 truncate">Metrónomo</p>
+                    <p className="text-xs text-gray-500 truncate">Pulso visual y sonido configurable</p>
                   </div>
-
-                  {/* Sound Toggle */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-300">Sonido click</p>
-                      <p className="text-xs text-gray-500">Click audible en cada pulso</p>
+                  <button
+                    onClick={() => setShowMetronome(!showMetronome)}
+                    className={`relative w-16 h-9 rounded-full transition-colors flex-shrink-0 ${showMetronome ? 'bg-amber-400' : 'bg-gray-700'}`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 transition-transform duration-200 ${showMetronome ? 'translate-x-7' : 'translate-x-0'} w-8 h-8 bg-white rounded-full shadow-md`} />
+                  </button>
+                </div>
+                {showMetronome && (
+                  <div className="space-y-4 mt-4">
+                    {/* BPM */}
+                    <div>
+                      <label className="flex items-center justify-between text-sm mb-2">
+                        <span className="text-gray-300">BPM</span>
+                        <span className="text-white font-mono">{bpm}</span>
+                      </label>
+                      <input
+                        type="range"
+                        min="40"
+                        max="200"
+                        value={bpm}
+                        onChange={(e) => setBpm(Number(e.target.value))}
+                        className="w-full h-2 bg-gray-800 rounded-lg appearance-none accent-amber-400 cursor-pointer"
+                      />
                     </div>
-                    <button
-                      onClick={() => setMetronomeSound(!metronomeSound)}
-                      className={`relative w-16 h-9 rounded-full transition-colors flex-shrink-0 ${metronomeSound ? 'bg-amber-400' : 'bg-gray-700'}`}
-                    >
-                      <span className={`absolute top-0.5 left-0.5 transition-transform duration-200 ${metronomeSound ? 'translate-x-7' : 'translate-x-0'} w-8 h-8 bg-white rounded-full shadow-md`} />
-                    </button>
+
+                    {/* Time Signature */}
+                    <div>
+                      <label className="flex items-center justify-between text-sm mb-2">
+                        <span className="text-gray-300">Compás</span>
+                        <span className="text-white font-mono">{timeSignature}</span>
+                      </label>
+                      <select
+                        value={timeSignature}
+                        onChange={(e) => setTimeSignature(e.target.value)}
+                        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-amber-400"
+                      >
+                        <option value="4/4">4/4 (Cuatro por cuatro)</option>
+                        <option value="3/4">3/4 (Vals)</option>
+                        <option value="6/8">6/8 (Compuesto)</option>
+                        <option value="2/4">2/4 (Marcha)</option>
+                        <option value="5/4">5/4 (Irregular)</option>
+                        <option value="7/8">7/8 (Irregular)</option>
+                      </select>
+                    </div>
+
+                    {/* Sound Toggle */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-gray-300">Sonido click</p>
+                        <p className="text-xs text-gray-500">Click audible en cada pulso</p>
+                      </div>
+                      <button
+                        onClick={() => setMetronomeSound(!metronomeSound)}
+                        className={`relative w-16 h-9 rounded-full transition-colors flex-shrink-0 ${metronomeSound ? 'bg-amber-400' : 'bg-gray-700'}`}
+                      >
+                        <span className={`absolute top-0.5 left-0.5 transition-transform duration-200 ${metronomeSound ? 'translate-x-7' : 'translate-x-0'} w-8 h-8 bg-white rounded-full shadow-md`} />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-
-            {/* Continuous Mode */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-300 truncate">Modo setlist continuo</p>
-                  <p className="text-xs text-gray-500 truncate">Auto-avanzar al terminar canción</p>
-                </div>
-                <button
-                  onClick={() => setContinuousMode(!continuousMode)}
-                  className={`relative w-16 h-9 rounded-full transition-colors flex-shrink-0 ${continuousMode ? 'bg-amber-400' : 'bg-gray-700'}`}
-                >
-                  <span className={`absolute top-0.5 left-0.5 transition-transform duration-200 ${continuousMode ? 'translate-x-7' : 'translate-x-0'} w-8 h-8 bg-white rounded-full shadow-md`} />
-                </button>
+                )}
               </div>
-              {continuousMode && setlistSongs.length > 0 && (
-                <p className="text-xs text-amber-400">Canción {currentSongIndex + 1} de {setlistSongs.length}</p>
-              )}
-            </div>
 
-            {/* Transpose Controls in Settings */}
-            <div className="pt-4 border-t border-gray-800">
-              <p className="text-sm text-gray-300 mb-3">Transposición rápida</p>
-              <div className="flex items-center gap-2">
-                <button onClick={() => setSemitones(s => s - 1)} className="w-10 h-10 bg-gray-800 rounded-xl hover:bg-gray-700"><Minus size={20} /></button>
-                <span className={`w-16 text-center font-bold ${semitones !== 0 ? 'text-amber-400' : 'text-white'}`}>
-                  {semitones > 0 ? `+${semitones}` : semitones}
-                </span>
-                <button onClick={() => setSemitones(s => s + 1)} className="w-10 h-10 bg-gray-800 rounded-xl hover:bg-gray-700"><Plus size={20} /></button>
-                <button onClick={() => setSemitones(0)} className="ml-2 w-10 h-10 bg-gray-800 rounded-xl hover:bg-gray-700 text-gray-400"><RefreshCw size={20} /></button>
+              {/* Continuous Mode */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-300 truncate">Modo setlist continuo</p>
+                    <p className="text-xs text-gray-500 truncate">Auto-avanzar al terminar canción</p>
+                  </div>
+                  <button
+                    onClick={() => setContinuousMode(!continuousMode)}
+                    className={`relative w-16 h-9 rounded-full transition-colors flex-shrink-0 ${continuousMode ? 'bg-amber-400' : 'bg-gray-700'}`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 transition-transform duration-200 ${continuousMode ? 'translate-x-7' : 'translate-x-0'} w-8 h-8 bg-white rounded-full shadow-md`} />
+                  </button>
+                </div>
+                {continuousMode && setlistSongs.length > 0 && (
+                  <p className="text-xs text-amber-400 mt-2">Canción {currentSongIndex + 1} de {setlistSongs.length}</p>
+                )}
+              </div>
+
+              {/* Transpose Controls in Settings */}
+              <div className="pt-4 border-t border-gray-800">
+                <p className="text-sm text-gray-300 mb-3">Transposición rápida</p>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setSemitones(s => s - 1)} className="w-10 h-10 bg-gray-800 rounded-xl hover:bg-gray-700"><Minus size={20} /></button>
+                  <span className={`w-16 text-center font-bold ${semitones !== 0 ? 'text-amber-400' : 'text-white'}`}>
+                    {semitones > 0 ? `+${semitones}` : semitones}
+                  </span>
+                  <button onClick={() => setSemitones(s => s + 1)} className="w-10 h-10 bg-gray-800 rounded-xl hover:bg-gray-700"><Plus size={20} /></button>
+                  <button onClick={() => setSemitones(0)} className="ml-2 w-10 h-10 bg-gray-800 rounded-xl hover:bg-gray-700 text-gray-400"><RefreshCw size={20} /></button>
+                </div>
               </div>
             </div>
           </div>
@@ -748,66 +751,66 @@ export default function StageViewer() {
       </div>
 
 {/* Controles Inferiores - Fixed/Static, Always Visible, Safe Area Aware */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 pb-safe pt-2 md:pt-4 px-2 md:px-4 lg:px-6">
+      <div className="fixed bottom-0 left-0 right-0 z-50 pb-safe pt-1 md:pt-2 px-2 md:px-4 lg:px-4">
         <div className="mx-auto max-w-[95vw] md:max-w-[80vw] lg:max-w-[70vw]">
-          <div className="bg-panel/95 backdrop-blur-sm border border-gray-800 rounded-2xl md:rounded-3xl shadow-2xl p-3 md:p-4 lg:p-5 animate-slide-up">
-            <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-4 lg:gap-5">
+          <div className="bg-panel/95 backdrop-blur-sm border border-gray-800 rounded-2xl md:rounded-3xl shadow-2xl p-2 md:p-3 lg:p-4 animate-slide-up">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3 lg:gap-4">
               {/* Transpose Controls - Always visible */}
               <div className="flex items-center gap-1 md:gap-2 bg-[#1A1A20] p-1 md:p-2 rounded-xl md:rounded-2xl flex-wrap justify-center flex-shrink-0">
-                <button onClick={() => setSemitones(s => s - 1)} className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-lg hover:bg-gray-700 transition-colors" title="-1 Semitono"><Minus size={20} /></button>
-                <div className="flex flex-col items-center justify-center w-10 md:w-14 font-bold">
-                  <span className="text-[10px] md:text-xs text-gray-500 uppercase">Tono</span>
-                  <span className={semitones !== 0 ? 'text-amber-400 text-base md:text-lg' : 'text-white text-base md:text-lg'}>{semitones > 0 ? `+${semitones}` : semitones}</span>
+                <button onClick={() => setSemitones(s => s - 1)} className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-lg hover:bg-gray-700 transition-colors" title="-1 Semitono"><Minus size={18} /></button>
+                <div className="flex flex-col items-center justify-center w-9 md:w-12 font-bold">
+                  <span className="text-[9px] md:text-xs text-gray-500 uppercase">Tono</span>
+                  <span className={semitones !== 0 ? 'text-amber-400 text-sm md:text-base' : 'text-white text-sm md:text-base'}>{semitones > 0 ? `+${semitones}` : semitones}</span>
                 </div>
-                <button onClick={() => setSemitones(s => s + 1)} className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-lg hover:bg-gray-700 transition-colors" title="+1 Semitono"><Plus size={20} /></button>
-                <button onClick={() => setSemitones(0)} className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-lg hover:bg-gray-700 transition-colors text-gray-400" title="Tono Original"><RefreshCw size={18} /></button>
+                <button onClick={() => setSemitones(s => s + 1)} className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-lg hover:bg-gray-700 transition-colors" title="+1 Semitono"><Plus size={18} /></button>
+                <button onClick={() => setSemitones(0)} className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-lg hover:bg-gray-700 transition-colors text-gray-400" title="Tono Original"><RefreshCw size={16} /></button>
               </div>
 
-              <div className="w-px h-10 md:h-12 bg-gray-700 hidden md:block"></div>
-              <div className="h-px w-10 bg-gray-700 md:hidden"></div>
+              <div className="w-px h-8 md:h-10 bg-gray-700 hidden md:block"></div>
+              <div className="h-px w-8 bg-gray-700 md:hidden"></div>
 
               {/* Play/Pause - Main action, always centered */}
               <button
                 onClick={toggleScroll}
-                className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center transition-all flex-shrink-0 ${
+                className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center transition-all flex-shrink-0 ${
                   isScrolling ? 'bg-red-500 text-white hover:bg-red-600 shadow-[0_0_15px_rgba(239,68,68,0.4)]' : 'bg-amber-400 text-black hover:bg-amber-500 shadow-[0_0_15px_rgba(251,191,36,0.3)]'
                 }`}
               >
-                {isScrolling ? <Pause size={28} /> : <Play size={28} className="ml-1" />}
+                {isScrolling ? <Pause size={24} /> : <Play size={24} className="ml-1" />}
               </button>
 
-              <div className="w-px h-10 md:h-12 bg-gray-700 hidden md:block"></div>
-              <div className="h-px w-10 bg-gray-700 md:hidden"></div>
+              <div className="w-px h-8 md:h-10 bg-gray-700 hidden md:block"></div>
+              <div className="h-px w-8 bg-gray-700 md:hidden"></div>
 
               {/* Continuous mode navigation */}
               {continuousMode && setlistSongs.length > 0 && (
                 <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
-                  <button onClick={() => currentSongIndex > 0 && navigate(`/stage/${setlistSongs[currentSongIndex - 1].id}`)} disabled={currentSongIndex === 0} className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center bg-[#1A1A20] rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Canción anterior"><SkipBack size={20} /></button>
-                  <span className="text-[10px] md:text-xs font-mono text-gray-400 px-1 md:px-2 min-w-[2.5rem] text-center">{currentSongIndex + 1} / {setlistSongs.length}</span>
-                  <button onClick={() => currentSongIndex < setlistSongs.length - 1 && navigate(`/stage/${setlistSongs[currentSongIndex + 1].id}`)} disabled={currentSongIndex === setlistSongs.length - 1} className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center bg-[#1A1A20] rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Siguiente canción"><SkipForward size={20} /></button>
+                  <button onClick={() => currentSongIndex > 0 && navigate(`/stage/${setlistSongs[currentSongIndex - 1].id}`)} disabled={currentSongIndex === 0} className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center bg-[#1A1A20] rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Canción anterior"><SkipBack size={18} /></button>
+                  <span className="text-[9px] md:text-xs font-mono text-gray-400 px-1 min-w-[2rem] text-center">{currentSongIndex + 1} / {setlistSongs.length}</span>
+                  <button onClick={() => currentSongIndex < setlistSongs.length - 1 && navigate(`/stage/${setlistSongs[currentSongIndex + 1].id}`)} disabled={currentSongIndex === setlistSongs.length - 1} className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center bg-[#1A1A20] rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Siguiente canción"><SkipForward size={18} /></button>
                 </div>
               )}
 
-              <div className="w-px h-10 md:h-12 bg-gray-700 hidden md:block"></div>
-              <div className="h-px w-10 bg-gray-700 md:hidden"></div>
+              <div className="w-px h-8 bg-gray-700 hidden md:block"></div>
+              <div className="h-px w-8 bg-gray-700 md:hidden"></div>
 
               {/* Section Navigation */}
               {totalSections > 1 && (
-                <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
-                  <button onClick={prevSection} disabled={currentSectionIndex === 0} className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center bg-[#1A1A20] rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Sección anterior"><SkipBack size={20} /></button>
-                  <span className="text-[10px] md:text-xs font-mono text-gray-400 px-1 md:px-2 min-w-[2.5rem] text-center">{currentSectionIndex + 1} / {totalSections}</span>
-                  <button onClick={nextSection} disabled={currentSectionIndex >= totalSections - 1} className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center bg-[#1A1A20] rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Siguiente sección"><SkipForward size={20} /></button>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <button onClick={prevSection} disabled={currentSectionIndex === 0} className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center bg-[#1A1A20] rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Sección anterior"><SkipBack size={18} /></button>
+                  <span className="text-[9px] font-mono text-gray-400 px-1 min-w-[2rem] text-center">{currentSectionIndex + 1} / {totalSections}</span>
+                  <button onClick={nextSection} disabled={currentSectionIndex >= totalSections - 1} className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center bg-[#1A1A20] rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Siguiente sección"><SkipForward size={18} /></button>
                 </div>
               )}
 
-              <div className="w-px h-10 md:h-12 bg-gray-700 hidden md:block"></div>
-              <div className="h-px w-10 bg-gray-700 md:hidden"></div>
+              <div className="w-px h-8 bg-gray-700 hidden md:block"></div>
+              <div className="h-px w-8 bg-gray-700 md:hidden"></div>
 
               {/* Quick toggles - Always visible */}
-              <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
-                <button onClick={() => setShowMetronome(!showMetronome)} className={`w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-lg transition-colors ${showMetronome ? 'bg-amber-400 text-black' : 'bg-[#1A1A20] text-gray-400 hover:bg-gray-700'}`} title="Metrónomo visual"><Zap size={20} /></button>
-                <button onClick={() => setHighContrast(!highContrast)} className={`w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-lg transition-colors ${highContrast ? 'bg-amber-400 text-black' : 'bg-[#1A1A20] text-gray-400 hover:bg-gray-700'}`} title="Alto contraste"><Contrast size={20} /></button>
-                <button onClick={() => { setShowSettings(!showSettings); }} className={`w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-lg transition-colors ${showSettings ? 'bg-amber-400 text-black' : 'bg-[#1A1A20] text-gray-400 hover:bg-gray-700'}`} title="Ajustes"><Settings size={20} /></button>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button onClick={() => setShowMetronome(!showMetronome)} className={`w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-lg transition-colors ${showMetronome ? 'bg-amber-400 text-black' : 'bg-[#1A1A20] text-gray-400 hover:bg-gray-700'}`} title="Metrónomo visual"><Zap size={18} /></button>
+                <button onClick={() => setHighContrast(!highContrast)} className={`w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-lg transition-colors ${highContrast ? 'bg-amber-400 text-black' : 'bg-[#1A1A20] text-gray-400 hover:bg-gray-700'}`} title="Alto contraste"><Contrast size={18} /></button>
+                <button onClick={() => setShowSettingsModal(true)} className={`w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-lg transition-colors ${showSettingsModal ? 'bg-amber-400 text-black' : 'bg-[#1A1A20] text-gray-400 hover:bg-gray-700'}`} title="Ajustes"><Settings size={18} /></button>
               </div>
             </div>
           </div>

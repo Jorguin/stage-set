@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { calculateRetention, calculateRetentionSync } from '../utils/spacedRepetition';
+import { calculateRetentionFromProgress } from '../utils/spacedRepetition';
 import { LogOut, Play, Plus, Calendar, Folder, Mic2, MapPin, CheckSquare, Square, Trash2, Music2, Users, Settings, X, ChevronDown, Save, Edit, Brain, Target, GripVertical, Share2 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -119,13 +119,13 @@ export default function Dashboard() {
     const songsData = data || [];
     setSongs(songsData);
     
-    // Compute retention for all songs
+    // Compute retention for all songs (section-based, consistent with PracticeView)
     if (songsData.length > 0) {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const retentions = {};
         for (const song of songsData) {
-          const retention = await calculateRetention(song.last_practiced, song.mastery_level, song.id, user.id);
+          const retention = await calculateRetentionFromProgress(song.id, user.id);
           retentions[song.id] = retention;
         }
         setRetentionMap(retentions);
@@ -911,7 +911,7 @@ export default function Dashboard() {
             ) : (
               <div className="grid gap-4">
                 {songs.map((song) => {
-                  const retention = retentionMap[song.id] ?? calculateRetentionSync(song.last_practiced, song.mastery_level);
+                  const retention = retentionMap[song.id] ?? 0;
                   
                   let barColor = 'bg-red-500';
                   if (retention >= 80) barColor = 'bg-green-500';
