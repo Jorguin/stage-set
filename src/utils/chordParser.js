@@ -21,12 +21,35 @@ const SECTION_MARKERS = [
 ];
 
 // Check if a line is a section marker (e.g., "CORO:", "INTER:", "INICIO-CORO")
+// Also extracts trailing chords if present: "INTER: E2 A2 C#m7 A"
+function parseSectionLine(line) {
+  const trimmed = line.trim();
+  if (!trimmed) return null;
+  
+  // Check for "MARKER: chords..." format
+  const colonIndex = trimmed.indexOf(':');
+  if (colonIndex > 0) {
+    const marker = trimmed.substring(0, colonIndex).trim().toLowerCase();
+    const afterColon = trimmed.substring(colonIndex + 1).trim();
+    
+    if (SECTION_MARKERS.some(m => marker === m || marker.startsWith(m + ' '))) {
+      // Parse trailing chords if any
+      const trailingChords = afterColon ? afterColon.split(/\s+/).filter(t => CHORD_REGEX.test(t)) : [];
+      return { marker: trimmed.substring(0, colonIndex + 1), trailingChords, isMarker: true };
+    }
+  }
+  
+  // Check for plain marker (e.g., "CORO", "INTER", "INICIO-CORO")
+  const lower = trimmed.toLowerCase();
+  if (SECTION_MARKERS.some(m => lower === m || lower.startsWith(m + ' '))) {
+    return { marker: trimmed, trailingChords: [], isMarker: true };
+  }
+  
+  return null;
+}
+
 function isSectionMarker(line) {
-  const trimmed = line.trim().toLowerCase();
-  if (!trimmed) return false;
-  // Lines ending with colon or matching known section names
-  if (trimmed.endsWith(':')) return true;
-  return SECTION_MARKERS.some(marker => trimmed === marker || trimmed.startsWith(marker + ' '));
+  return parseSectionLine(line) !== null;
 }
 
 // Check if a line is PURELY chords (no lyrics words)
@@ -34,7 +57,7 @@ export function isChordLine(line) {
   const trimmed = line.trim();
   if (!trimmed) return false;
   
-  // Skip section markers
+  // Skip section markers (but allow trailing chords on section lines - handled separately)
   if (isSectionMarker(trimmed)) return false;
   
   // Split by whitespace and check if ALL tokens are chords
@@ -97,6 +120,15 @@ export function autoDetectChords(text) {
   for (let i = 0; i < lines.length; i++) {
     const currentLine = lines[i];
     const nextLine = lines[i + 1];
+    
+    // Check for section line with trailing chords: "INTER: E2 A2 C#m7 A"
+    const sectionInfo = parseSectionLine(currentLine);
+    if (sectionInfo && sectionInfo.trailingChords.length > 0) {
+      // Convert trailing chords to ChordPro format inline
+      const chordStr = sectionInfo.trailingChords.map(c => `[${c}]`).join(' ');
+      result.push(`${sectionInfo.marker} ${chordStr}`);
+      continue;
+    }
     
     // If current line is PURELY chords and next line exists (lyrics)
     if (isChordLine(currentLine) && nextLine !== undefined && !isSectionMarker(nextLine)) {

@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { calculateRetentionFromProgress } from '../utils/spacedRepetition';
 import { parseSections, getSectionKey } from '../utils/songSections';
 import { autoDetectChords, isAlreadyChordPro } from '../utils/chordParser';
+import { ChordPicker } from '../components/chord/ChordPicker';
 import { LogOut, Play, Plus, Calendar, Folder, Mic2, MapPin, CheckSquare, Square, Trash2, Music2, Users, Settings, X, ChevronDown, Save, Edit, Brain, Target, GripVertical, Share2, Zap } from 'lucide-react';
 
 export default function Dashboard() {
@@ -45,6 +46,7 @@ export default function Dashboard() {
   const [openSongMenu, setOpenSongMenu] = useState(null);
   const [editingSong, setEditingSong] = useState(null);
   const [retentionMap, setRetentionMap] = useState({});
+  const songContentRef = useRef(null);
 
   // Drag and drop for setlist reordering
   const [draggingId, setDraggingId] = useState(null);
@@ -451,6 +453,24 @@ const { data: { user } } = await supabase.auth.getUser();
     if (uploadError) throw uploadError;
 
     return filePath;
+  };
+
+  // Insert chord at cursor position in textarea
+  const insertChord = (chord) => {
+    const textarea = songContentRef.current;
+    if (!textarea) return;
+    
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const chordText = `[${chord}]`;
+    
+    setNewSongContent(prev => prev.slice(0, start) + chordText + prev.slice(end));
+    
+    // Focus and move cursor after inserted chord
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + chordText.length, start + chordText.length);
+    }, 0);
   };
 
   const handleAddSong = async (e) => {
@@ -1412,13 +1432,15 @@ const { data: { user } } = await supabase.auth.getUser();
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-2">Acordes y Letra (Formato ChordPro)</label>
                 <textarea
+                  ref={songContentRef}
                   required
                   value={newSongContent}
                   onChange={(e) => setNewSongContent(e.target.value)}
                   className="w-full bg-[#1A1A20] border border-gray-700 rounded-xl px-4 py-3 text-white h-64 font-mono text-sm focus:outline-none focus:border-amber-400"
                   placeholder="[Em]Today is [G]gonna be the day..."
                 />
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                  <ChordPicker onInsertChord={insertChord} />
                   <button
                     type="button"
                     onClick={() => {
@@ -1439,7 +1461,7 @@ const { data: { user } } = await supabase.auth.getUser();
                     <Zap size={12} /> Auto-detectar acordes
                   </button>
                   <span className="text-xs text-gray-500">
-                    Pega acordes arriba de la letra (una línea acordes, una línea letra)
+                    Pega acordes arriba de la letra o usa el selector 👆
                   </span>
                 </div>
               </div>
