@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { parseLine } from '../utils/musicLogic';
-import { ArrowLeft, Minus, Plus, Play, Pause, RefreshCw, FileText, Contrast, Zap, SkipBack, SkipForward, Settings, X, ChevronUp, ChevronDown, Menu } from 'lucide-react';
+import { ArrowLeft, Minus, Plus, Play, Pause, RefreshCw, FileText, Contrast, Zap, SkipBack, SkipForward, Settings, X, ChevronUp, ChevronDown, Menu, Guitar } from 'lucide-react';
+import { ChordGlossary } from '../components/chord/ChordGlossary';
 
 export default function StageViewer() {
   const { id } = useParams();
@@ -49,9 +50,9 @@ export default function StageViewer() {
   const [setlistSongs, setSetlistSongs] = useState([]);
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
 
-  // Settings panel
+// Settings panel
   const [showSettings, setShowSettings] = useState(false);
-const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   
   // Bottom controls visibility (mobile responsive)
   const [showBottomControls, setShowBottomControls] = useState(false);
@@ -560,6 +561,30 @@ const [showSettingsModal, setShowSettingsModal] = useState(false);
               <FileText size={24} />
             </a>
           )}
+          {/* Tuner Button */}
+          <button
+            onClick={() => setShowTuner(true)}
+            className="w-12 h-12 flex items-center justify-center bg-panel rounded-full text-white hover:text-amber-400 transition-colors shadow-lg"
+            title="Afinador"
+          >
+            <Guitar size={24} />
+          </button>
+          {/* Chord Glossary Button */}
+          <button
+            onClick={() => setShowChordGlossary(true)}
+            className="w-12 h-12 flex items-center justify-center bg-panel rounded-full text-white hover:text-amber-400 transition-colors shadow-lg"
+            title="Glosario de Acordes"
+          >
+            <Menu size={24} />
+          </button>
+          {/* Settings Button */}
+          <button
+            onClick={() => setShowSettingsModal(true)}
+            className="w-12 h-12 flex items-center justify-center bg-panel rounded-full text-white hover:text-amber-400 transition-colors shadow-lg"
+            title="Ajustes (Esc para cerrar)"
+          >
+            <Settings size={24} />
+          </button>
         </div>
       </div>
 
@@ -813,25 +838,9 @@ const [showSettingsModal, setShowSettingsModal] = useState(false);
                 <button onClick={() => setShowSettingsModal(true)} className={`w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-lg transition-colors ${showSettingsModal ? 'bg-amber-400 text-black' : 'bg-[#1A1A20] text-gray-400 hover:bg-gray-700'}`} title="Ajustes"><Settings size={18} /></button>
               </div>
             </div>
-          </div>
+</div>
         </div>
       </div>
-    {/* Tuner Modal */}
-      {showTuner && (
-        <Tuner onClose={() => setShowTuner(false)} defaultInstrument="guitar" />
-      )}
-
-      {/* Chord Glossary Modal */}
-      {showChordGlossary && (
-        <ChordGlossary 
-          onClose={() => setShowChordGlossary(false)} 
-          onSelectChord={(chord) => {
-            // Insert chord at cursor position in content
-            // For now just log
-            console.log('Selected chord:', chord);
-          }}
-        />
-      )}
     </div>
   );
-}
+};
