@@ -1055,31 +1055,31 @@ export default function Dashboard() {
                         </div>
 
                         {firstSongId && (
-                          <div className="flex items-center gap-3 self-start md:self-auto">
+                          <div className="flex items-center gap-3 self-start md:self-auto flex-wrap">
                             <button
                               onClick={() => navigate(`/practice/setlist/${evt.id}`)}
-                              className="bg-green-500 text-black px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-green-600 transition-colors shadow-[0_0_15px_rgba(34,197,94,0.3)]"
+                              className="flex-1 md:flex-none min-w-[180px] bg-green-500 text-black px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-600 transition-colors shadow-[0_0_15px_rgba(34,197,94,0.3)] text-sm"
                             >
                               <Target size={20} className="fill-black" />
-                              Practicar Setlist ({setlistSongs.length} canciones)
+                              Practicar Setlist
                             </button>
                             <button
                               onClick={() => handleEventClick(firstSongId, setlistSongs)}
-                              className="bg-amber-400 text-black px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-amber-500 transition-colors shadow-[0_0_15px_rgba(251,191,36,0.3)]"
+                              className="flex-1 md:flex-none min-w-[180px] bg-amber-400 text-black px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-amber-500 transition-colors shadow-[0_0_15px_rgba(251,191,36,0.3)] text-sm"
                             >
                               <Play size={20} className="fill-black" />
-                              Iniciar Show ({setlistSongs.length} canciones)
+                              Iniciar Show
                             </button>
                             <button
                               onClick={() => handleShareEvent(evt.id, evt.title)}
-                              className="p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                              className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
                               title="Compartir Setlist"
                             >
                               <Share2 size={20} />
                             </button>
                             <button
                               onClick={() => confirmDelete('event', evt.id, evt.title)}
-                              className="p-2 bg-gray-800 rounded-xl text-gray-400 hover:text-red-400 hover:bg-gray-700 transition-colors"
+                              className="p-3 bg-gray-800 rounded-xl text-gray-400 hover:text-red-400 hover:bg-gray-700 transition-colors"
                               title="Eliminar Setlist"
                             >
                               <Trash2 size={20} />
@@ -1290,20 +1290,20 @@ export default function Dashboard() {
                         </div>
 
                         {firstSongId && (
-                          <div className="flex items-center gap-3 self-start md:self-auto">
+                          <div className="flex items-center gap-3 self-start md:self-auto flex-wrap">
                             <button
                               onClick={() => navigate(`/practice/setlist/${evt.id}`)}
-                              className="bg-green-500 text-black px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-green-600 transition-colors shadow-[0_0_15px_rgba(34,197,94,0.3)]"
+                              className="flex-1 md:flex-none min-w-[180px] bg-green-500 text-black px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-600 transition-colors shadow-[0_0_15px_rgba(34,197,94,0.3)] text-sm"
                             >
                               <Target size={20} className="fill-black" />
-                              Practicar Setlist ({setlistSongs.length} canciones)
+                              Practicar Setlist
                             </button>
                             <button
                               onClick={() => handleEventClick(firstSongId, setlistSongs)}
-                              className="bg-blue-500 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-600 transition-colors"
+                              className="flex-1 md:flex-none min-w-[180px] bg-blue-500 text-white px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-600 transition-colors text-sm"
                             >
                               <Play size={20} className="fill-white" />
-                              Ver Setlist ({setlistSongs.length} canciones)
+                              Ver Setlist
                             </button>
                           </div>
                         )}

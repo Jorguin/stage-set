@@ -127,21 +127,22 @@ export default function StageViewer() {
     }
   }, [location.state, id]);
 
-  const parseSections = useCallback((content) => {
+const parseSections = useCallback((content) => {
     if (!content) return [];
     const lines = content.split('\n');
     const sections = [];
-    // English + Spanish section names - comprehensive list
+    // English + Spanish section names - comprehensive list (longest first for regex priority)
     const sectionNames = [
-      'Verse', 'Chorus', 'Bridge', 'Intro', 'Outro', 'Pre-Chorus', 'PreChorus', 'Pre Chorus',
-      'Solo', 'Interlude', 'Tag', 'Ending', 'Pre-Verse', 'PreVerse',
       'Primera Parte', 'Segunda Parte', 'Tercera Parte', 'Cuarta Parte',
-      'Pre-Estribillo', 'PreEstribillo', 'Estribillo', 'Pre-Coro', 'PreCoro', 'Coro',
-      'Puente', 'Interludio', 'Final', 'Verso', 'Pre-Coro', 'PreCoro',
+      'Pre-Estribillo', 'PreEstribillo', 'Estribillo', 'Pre-Coro', 'PreCoro', 'Pre Coro', 'Coro',
+      'Pre-Chorus', 'PreChorus', 'Pre Chorus', 'Chorus',
+      'Verse', 'Bridge', 'Intro', 'Outro', 'Solo', 'Interlude', 'Tag', 'Ending',
+      'Pre-Verse', 'PreVerse', 'Puente', 'Interludio', 'Final', 'Verso',
       'Refrain', 'Hook', 'Breakdown', 'Build', 'Drop', 'Vamp', 'Coda'
     ];
-    // Match section markers anywhere in line: [Verse], [Verse 1], [Chorus], [Bridge 2], etc.
-    const pattern = new RegExp(`\\[(${sectionNames.join('|')})\\s*\\d*\\]`, 'i');
+    // Match section markers anywhere: [Verse], [Verse 1], [Segunda Parte], [Estribillo 2], etc.
+    // Allows optional space + word + optional digits: "Segunda Parte 1", "Chorus 2"
+    const pattern = new RegExp(`\\[(${sectionNames.join('|')})(?:\\s+\\w+)?\\s*\\d*\\]`, 'i');
     lines.forEach((line, index) => {
       const match = line.match(pattern);
       if (match) {
@@ -490,43 +491,41 @@ export default function StageViewer() {
       {showMetronome && (
         <div 
           ref={metronomeRef}
-          className="h-4 w-full bg-gray-900 metronome-bar border-b border-gray-700"
+          className="h-5 w-full bg-gray-900 metronome-bar border-b border-gray-700"
           style={{ backgroundColor: highContrast ? '#000' : '#0A0A0F' }}
         >
-          <div className="h-full flex items-center justify-between px-2">
-            {/* Beat indicators */}
-            {[...Array(parseInt(timeSignature.split('/')[0]) || 4)].map((_, i) => (
-              <div 
-                key={i}
-                className="flex-1 flex items-center justify-center relative"
-              >
+          <div className="h-full flex items-center justify-center px-2">
+            {/* Beat grid - rectangles based on time signature */}
+            <div className="flex items-center gap-1 w-full max-w-md mx-auto">
+              {[...Array(parseInt(timeSignature.split('/')[0]) || 4)].map((_, i) => (
                 <div 
-                  className={`w-2.5 h-2.5 rounded-full transition-all duration-70 ${
-                    i + 1 === currentBeat 
-                      ? (metronomeFlash.show 
-                          ? (metronomeFlash.accent 
-                              ? 'bg-amber-300 scale-200 shadow-[0_0_15px_rgba(251,191,36,1)]' 
-                              : 'bg-amber-400 scale-150 shadow-[0_0_8px_rgba(251,191,36,0.6)]')
-                          : 'bg-amber-400 scale-125 shadow-[0_0_6px_rgba(251,191,36,0.4)]')
-                      : 'bg-gray-700'
-                  }`}
-                />
-                {/* Beat number label for first beat */}
-                {i === 0 && (
-                  <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[8px] font-bold text-amber-400/80 whitespace-nowrap">
-                    1
+                  key={i}
+                  className="flex-1 h-3 relative min-w-0"
+                >
+                  <div 
+                    className={`h-full rounded-sm transition-all duration-50 ${
+                      i + 1 === currentBeat 
+                        ? (metronomeFlash.show 
+                            ? (metronomeFlash.accent 
+                                ? 'bg-amber-300 shadow-[0_0_8px_rgba(251,191,36,1)] scale-y-125' 
+                                : 'bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.7)] scale-y-115')
+                            : 'bg-amber-400 shadow-[0_0_4px_rgba(251,191,36,0.5)] scale-y-110')
+                        : 'bg-gray-700'
+                    }`}
+                    style={{ transformOrigin: 'bottom center' }}
+                  />
+                  {/* Beat number */}
+                  <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[7px] font-bold text-amber-400/70 whitespace-nowrap">
+                    {i + 1}
                   </span>
-                )}
-              </div>
-            ))}
-            {/* Full-width flash overlay on ALL beats - accent strong, others subtle */}
-            {metronomeFlash.show && (
+                </div>
+              ))}
+            </div>
+            
+            {/* Subtle full-bar flash on accent only */}
+            {metronomeFlash.show && metronomeFlash.accent && (
               <div 
-                className={`absolute inset-0 pointer-events-none animate-metronome-flash ${
-                  metronomeFlash.accent
-                    ? 'bg-gradient-to-r from-amber-400/30 via-amber-300/15 to-amber-400/30'
-                    : 'bg-gradient-to-r from-amber-400/10 via-transparent to-amber-400/10'
-                }`}
+                className="absolute inset-0 bg-gradient-to-r from-amber-400/15 via-amber-300/5 to-amber-400/15 pointer-events-none animate-metronome-flash rounded-sm"
               />
             )}
           </div>

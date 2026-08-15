@@ -25,16 +25,18 @@ export default function PracticeView() {
     if (!content) return [];
     const lines = content.split('\n');
     const sections = [];
+    // English + Spanish section names - comprehensive list (longest first for regex priority)
     const sectionNames = [
-      'Verse', 'Chorus', 'Bridge', 'Intro', 'Outro', 'Pre-Chorus', 'PreChorus', 'Pre Chorus',
-      'Solo', 'Interlude', 'Tag', 'Ending', 'Pre-Verse', 'PreVerse',
       'Primera Parte', 'Segunda Parte', 'Tercera Parte', 'Cuarta Parte',
-      'Pre-Estribillo', 'PreEstribillo', 'Estribillo', 'Pre-Coro', 'PreCoro', 'Coro',
-      'Puente', 'Interludio', 'Final', 'Verso',
+      'Pre-Estribillo', 'PreEstribillo', 'Estribillo', 'Pre-Coro', 'PreCoro', 'Pre Coro', 'Coro',
+      'Pre-Chorus', 'PreChorus', 'Pre Chorus', 'Chorus',
+      'Verse', 'Bridge', 'Intro', 'Outro', 'Solo', 'Interlude', 'Tag', 'Ending',
+      'Pre-Verse', 'PreVerse', 'Puente', 'Interludio', 'Final', 'Verso',
       'Refrain', 'Hook', 'Breakdown', 'Build', 'Drop', 'Vamp', 'Coda'
     ];
-    // Match section markers anywhere in line: [Verse], [Verse 1], [Chorus], [Bridge 2], etc.
-    const pattern = new RegExp(`\\[(${sectionNames.join('|')})\\s*\\d*\\]`, 'i');
+    // Match section markers anywhere: [Verse], [Verse 1], [Segunda Parte], [Estribillo 2], etc.
+    // Allows optional space + word + optional digits: "Segunda Parte 1", "Chorus 2"
+    const pattern = new RegExp(`\\[(${sectionNames.join('|')})(?:\\s+\\w+)?\\s*\\d*\\]`, 'i');
     lines.forEach((line, index) => {
       const match = line.match(pattern);
       if (match) {
