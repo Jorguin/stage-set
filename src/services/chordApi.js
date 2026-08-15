@@ -1,5 +1,5 @@
-// Chord API Service - Wrapper for external chord API
-const API_BASE = 'https://api.chordpro.com'; // Replace with actual API URL
+// Chord API Service - Wrapper for chords.alday.dev API
+const API_BASE = 'https://chords.alday.dev';
 
 export async function fetchChords(params = {}) {
   const searchParams = new URLSearchParams();
@@ -107,7 +107,8 @@ export function getChordVariations(note) {
 // Get related chords (circle of fifths)
 export function getRelatedChords(note, type = 'major') {
   const circleOfFifths = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#', 'D#', 'A#', 'F'];
-  const idx = circleOfFifths.indexOf(note.replace('b', '').replace('#', ''));
+  const normalizedNote = note.replace('b', '').replace('#', '');
+  const idx = circleOfFifths.indexOf(normalizedNote);
   if (idx === -1) return [];
   
   const related = [
@@ -119,3 +120,79 @@ export function getRelatedChords(note, type = 'major') {
   
   return related.map(n => getChordVariations(n)).flat();
 }
+
+// Fetch chord image URL from the API's image repository
+export function getChordImageUrl(chordId, position = 1) {
+  // Images hosted at https://github.com/aldaydev/chords_images
+  // Format: https://github.com/aldaydev/chords_images/blob/main/guitar-chords/{note}/{chord-id}-pos{position}.png?raw=true
+  const note = chordId.split('_')[0].toLowerCase().replace('#', '-sharp').replace('b', '-flat');
+  const type = chordId.split('_')[1] || 'major';
+  const typeMap = {
+    'major': 'major',
+    'minor': 'minor',
+    '7': '7',
+    'maj7': 'maj7',
+    'm7': 'm7',
+    'dim': 'dim',
+    'dim7': 'dim7',
+    'aug': 'aug',
+    'sus2': 'sus2',
+    'sus4': 'sus4',
+    '6': '6',
+    'm6': 'm6',
+    '9': '9',
+    'm9': 'm9',
+    'add9': 'add9',
+    '11': '11',
+    'm11': 'm11',
+    '13': '13',
+    'm13': 'm13',
+    '7sus4': '7sus4',
+    '7sus2': '7sus2',
+    '7b5': '7b5',
+    '7#5': '7sharp5',
+    '7b9': '7b9',
+    '7#9': '7sharp9',
+    '7b13': '7b13',
+    'dim9': 'dim9',
+    'maj9': 'maj9',
+    'maj11': 'maj11',
+    'maj13': 'maj13'
+  };
+  const mappedType = typeMap[type] || type;
+  const notePath = note.toLowerCase().replace('#', '-sharp').replace('b', '-flat');
+  return `https://github.com/aldaydev/chords_images/blob/main/guitar-chords/${notePath}/chord-${notePath}-${mappedType}-pos1.png?raw=true`;
+}
+
+const typeMap = {
+  'major': 'major',
+  'minor': 'minor',
+  '7': '7',
+  'maj7': 'maj7',
+  'm7': 'm7',
+  'dim': 'dim',
+  'dim7': 'dim7',
+  'aug': 'aug',
+  'sus2': 'sus2',
+  'sus4': 'sus4',
+  '6': '6',
+  'm6': 'm6',
+  '9': '9',
+  'm9': 'm9',
+  'add9': 'add9',
+  '11': '11',
+  'm11': 'm11',
+  '13': '13',
+  'm13': 'm13',
+  '7sus4': '7sus4',
+  '7sus2': '7sus2',
+  '7b5': '7b5',
+  '7#5': '7sharp5',
+  '7b9': '7b9',
+  '7#9': '7sharp9',
+  '7b13': '7b13',
+  'dim9': 'dim9',
+  'maj9': 'maj9',
+  'maj11': 'maj11',
+  'maj13': 'maj13'
+};
