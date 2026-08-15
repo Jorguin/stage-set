@@ -799,9 +799,9 @@ export default function Dashboard() {
           </h1>
         </div>
         
-        <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto">
+        <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full md:w-auto">
           {/* Band selector with management */}
-          <div className="relative w-full sm:w-auto flex-1 min-w-0">
+          <div className="relative w-full md:w-auto flex-1 min-w-0">
             <select 
               value={activeBandId || ''}
               onChange={(e) => setActiveBandId(e.target.value)}
@@ -816,7 +816,7 @@ export default function Dashboard() {
             </div>
           </div>
           
-          <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-center md:justify-end">
             <button
               onClick={() => { setNewBandName(''); setIsBandModalOpen(true); }}
               className="p-2 bg-[#1A1A20] rounded-xl text-gray-400 hover:text-white hover:bg-gray-700 transition-colors border border-gray-800"
@@ -860,29 +860,29 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* Tabs - responsive wrap */}
+      {/* Tabs - responsive, expand to fill space on wider screens */}
       <div className="flex flex-wrap gap-2 mb-6">
         <button 
           onClick={() => setActiveTab('songs')}
-          className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-medium transition-colors text-sm sm:font-medium ${activeTab === 'songs' ? 'bg-amber-400 text-black font-bold' : 'bg-panel text-gray-400 hover:text-white'}`}
+          className={`flex-1 min-w-[80px] flex items-center justify-center gap-2 px-3 sm:px-6 py-2.5 sm:py-3 rounded-xl font-medium transition-colors text-sm sm:font-medium ${activeTab === 'songs' ? 'bg-amber-400 text-black font-bold' : 'bg-panel text-gray-400 hover:text-white'}`}
         >
           <Folder size={16} className="shrink-0" /> <span className="hidden sm:inline">Repertorio</span>
         </button>
         <button 
           onClick={() => setActiveTab('events')}
-          className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-medium transition-colors text-sm sm:font-medium ${activeTab === 'events' ? 'bg-amber-400 text-black font-bold' : 'bg-panel text-gray-400 hover:text-white'}`}
+          className={`flex-1 min-w-[80px] flex items-center justify-center gap-2 px-3 sm:px-6 py-2.5 sm:py-3 rounded-xl font-medium transition-colors text-sm sm:font-medium ${activeTab === 'events' ? 'bg-amber-400 text-black font-bold' : 'bg-panel text-gray-400 hover:text-white'}`}
         >
           <Calendar size={16} className="shrink-0" /> <span className="hidden sm:inline">Setlists</span>
         </button>
         <button 
           onClick={() => setActiveTab('shared')}
-          className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-medium transition-colors text-sm sm:font-medium ${activeTab === 'shared' ? 'bg-blue-500 text-white font-bold' : 'bg-panel text-gray-400 hover:text-white'}`}
+          className={`flex-1 min-w-[80px] flex items-center justify-center gap-2 px-3 sm:px-6 py-2.5 sm:py-3 rounded-xl font-medium transition-colors text-sm sm:font-medium ${activeTab === 'shared' ? 'bg-blue-500 text-white font-bold' : 'bg-panel text-gray-400 hover:text-white'}`}
         >
           <Users size={16} className="shrink-0" /> <span className="hidden sm:inline">Compartidos</span>
         </button>
         <button 
           onClick={() => setActiveTab('practice')}
-          className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-medium transition-colors text-sm sm:font-medium ${activeTab === 'practice' ? 'bg-amber-400 text-black font-bold' : 'bg-panel text-gray-400 hover:text-white'}`}
+          className={`flex-1 min-w-[80px] flex items-center justify-center gap-2 px-3 sm:px-6 py-2.5 sm:py-3 rounded-xl font-medium transition-colors text-sm sm:font-medium ${activeTab === 'practice' ? 'bg-amber-400 text-black font-bold' : 'bg-panel text-gray-400 hover:text-white'}`}
         >
           <Brain size={16} className="shrink-0" /> <span className="hidden sm:inline">Practicar</span>
         </button>
