@@ -150,11 +150,7 @@ export default function StageViewer() {
     }
   });
 
-  // Combine refs
-  const combinedScrollRef = useCallback((node) => {
-    scrollRef.current = node;
-    sectionScrollRef(node);
-  }, [sectionScrollRef]);
+  // scrollRef is now a callback from the hook
 
   // Initialize from location state
   useEffect(() => {
@@ -761,7 +757,7 @@ const parseSections = useCallback((content) => {
 
       {/* Contenido (con ref para scroll) */}
       <div 
-        ref={combinedScrollRef}
+        ref={scrollRef}
         className="flex-1 overflow-y-auto pt-32 md:pt-48 pb-20 md:pb-64 px-4 md:px-12 lg:px-24"
         style={{ scrollBehavior: (isScrolling || sectionScrolling) ? 'auto' : 'smooth' }}
       >

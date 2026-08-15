@@ -154,8 +154,13 @@ export function useSectionAutoScroll({
     };
   }, []);
 
+  // Create a ref callback that sets both refs
+  const scrollRefCallback = useCallback((node) => {
+    scrollRef.current = node;
+  }, []);
+
   return {
-    scrollRef,
+    scrollRef: scrollRefCallback,
     isScrolling,
     currentSectionIndex,
     sectionProgress,
