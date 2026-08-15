@@ -16,6 +16,23 @@ export function useSectionAutoScroll({
   const startTimeRef = useRef(null);
   const sectionTimingsRef = useRef([]);
 
+  // Early return if no parsedSong
+  if (!parsedSong || !parsedSong.sections || parsedSong.sections.length === 0) {
+    return {
+      scrollRef,
+      isScrolling: false,
+      currentSectionIndex: 0,
+      sectionProgress: 0,
+      startAutoScroll: () => {},
+      stopAutoScroll: () => {},
+      toggleScroll: () => {},
+      scrollToSection: () => {},
+      nextSection: () => {},
+      prevSection: () => {},
+      totalSections: 0
+    };
+  }
+
   useEffect(() => {
     if (parsedSong) {
       sectionTimingsRef.current = calculateSectionTimings(parsedSong, bpm, timeSignature);
@@ -152,8 +169,12 @@ export function useSectionAutoScroll({
     scrollToSection,
     nextSection,
     prevSection,
-    totalSections: parsedSong?.sections.length || 0
+    totalSections: parsedSong.sections.length
   };
+}
+
+function cancelFrameAnimation(id) {
+  cancelAnimationFrame(id);
 }
 
 export function SectionProgressBar({ 
