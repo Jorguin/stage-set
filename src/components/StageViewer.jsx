@@ -151,6 +151,28 @@ export default function StageViewer() {
     return sections;
   }, []);
 
+  const prevSection = useCallback(() => {
+    if (currentSectionIndex > 0) {
+      const lineIndex = sections[currentSectionIndex - 1].lineIndex;
+      const lineElements = scrollRef.current?.querySelectorAll('[data-line-index]');
+      if (lineElements && lineElements[lineIndex]) {
+        lineElements[lineIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setActiveSectionIndex(currentSectionIndex - 1);
+      }
+    }
+  }, [currentSectionIndex, sections]);
+
+  const nextSection = useCallback(() => {
+    if (currentSectionIndex < sections.length - 1) {
+      const lineIndex = sections[currentSectionIndex + 1].lineIndex;
+      const lineElements = scrollRef.current?.querySelectorAll('[data-line-index]');
+      if (lineElements && lineElements[lineIndex]) {
+        lineElements[lineIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setActiveSectionIndex(currentSectionIndex + 1);
+      }
+    }
+  }, [currentSectionIndex, sections]);
+
   useEffect(() => {
     async function fetchSong() {
       try {
