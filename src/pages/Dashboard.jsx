@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { calculateRetentionFromProgress } from '../utils/spacedRepetition';
+import { parseSections, getSectionKey } from '../utils/songSections';
 import { LogOut, Play, Plus, Calendar, Folder, Mic2, MapPin, CheckSquare, Square, Trash2, Music2, Users, Settings, X, ChevronDown, Save, Edit, Brain, Target, GripVertical, Share2 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -212,25 +212,42 @@ export default function Dashboard() {
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    
+
     // Calculate retention using SAME function as repertoire tab for consistency
     const songsWithProgress = await Promise.all((data || []).map(async (song) => {
-      const sections = song.song_section_progress || [];
-      const totalSections = sections.length;
-      const completedSections = sections.filter(s => s.is_completed).length;
-      
+      // Parse ALL sections from song content
+      const allSections = parseSections(song.content);
+      const totalSections = allSections.length;
+
+      // Build progress map from DB
+      const dbSections = song.song_section_progress || [];
+      const progressMap = {};
+      dbSections.forEach(p => {
+        const key = getSectionKey({ name: p.section_name }, p.section_order);
+        progressMap[key] = p;
+      });
+
+      // Count completed by checking each detected section against progress
+      let completedSections = 0;
+      allSections.forEach((section, index) => {
+        const key = getSectionKey(section, index);
+        if (progressMap[key]?.is_completed) {
+          completedSections++;
+        }
+      });
+
       // Use same retention calculation as repertoire tab (includes recency bonus/stale penalty)
       const retention = await calculateRetentionFromProgress(song.id, user.id);
-      
+
       return {
         ...song,
         practiceProgress: retention,
         totalSections,
         completedSections,
-        sections: sections.sort((a, b) => a.section_order - b.section_order)
+        sections: dbSections.sort((a, b) => a.section_order - b.section_order)
       };
     }));
-    
+
     setPracticeSongs(songsWithProgress);
   }
 

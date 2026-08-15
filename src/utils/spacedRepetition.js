@@ -1,5 +1,6 @@
 import { differenceInDays, parseISO } from 'date-fns';
 import { supabase } from '../lib/supabase';
+import { parseSections, getSectionKey } from './songSections';
 
 // 1=1 día, 2=3 días, 3=7 días, 4=15 días, 5=30 días
 const MASTERY_INTERVALS = {
@@ -13,46 +14,86 @@ const MASTERY_INTERVALS = {
 /**
  * Calculate retention based on section progress completion
  * Returns 0-100 based on how many sections are mastered
+ * Uses ALL detected sections from song content, not just those with progress records
  */
 export async function calculateRetentionFromProgress(songId, userId) {
   if (!songId || !userId) return 0;
 
   try {
-    // Get section progress for this song/user
-    const { data: sections } = await supabase
+    // Get song content to parse ALL sections
+    const { data: songData, error: songError } = await supabase
+      .from('songs')
+      .select('content')
+      .eq('id', songId)
+      .single();
+
+    if (songError || !songData) {
+      console.error('Error fetching song for retention:', songError);
+      return 0;
+    }
+
+    // Parse ALL sections from song content
+    const allSections = parseSections(songData.content);
+    const totalSections = allSections.length;
+
+    if (totalSections === 0) {
+      return 0; // No sections detected = 0% retention
+    }
+
+    // Get section progress for this song/user from DB
+    const { data: progressData } = await supabase
       .from('song_section_progress')
-      .select('is_completed, practice_count, last_practiced_at')
+      .select('section_name, section_order, is_completed, practice_count, last_practiced_at')
       .eq('song_id', songId)
       .eq('user_id', userId);
 
-    if (!sections || sections.length === 0) {
-      return 0; // No practice data = 0% retention
+    // Build progress map from DB
+    const progressMap = {};
+    if (progressData) {
+      progressData.forEach(p => {
+        const key = getSectionKey({ name: p.section_name }, p.section_order);
+        progressMap[key] = p;
+      });
     }
 
-    const totalSections = sections.length;
-    const completedSections = sections.filter(s => s.is_completed).length;
-    
-    // Base retention from completion rate
+    // Count completed sections by checking each detected section against progress
+    let completedSections = 0;
+    let recentPracticeCount = 0;
+    let staleSectionsCount = 0;
+
+    allSections.forEach((section, index) => {
+      const key = getSectionKey(section, index);
+      const progress = progressMap[key];
+      
+      if (progress?.is_completed) {
+        completedSections++;
+      }
+      
+      // Recent practice (last 7 days)
+      if (progress?.last_practiced_at) {
+        const daysAgo = differenceInDays(new Date(), parseISO(progress.last_practiced_at));
+        if (daysAgo <= 7) {
+          recentPracticeCount++;
+        }
+        // Stale practice (30+ days)
+        if (daysAgo > 30) {
+          staleSectionsCount++;
+        }
+      } else {
+        // Never practiced = stale
+        staleSectionsCount++;
+      }
+    });
+
+    // Base retention from completion rate (using ALL detected sections)
     let retention = Math.round((completedSections / totalSections) * 100);
 
-    // Bonus for recent practice (sections practiced in last 7 days)
-    const recentPractice = sections.filter(s => {
-      if (!s.last_practiced_at) return false;
-      const daysAgo = differenceInDays(new Date(), parseISO(s.last_practiced_at));
-      return daysAgo <= 7;
-    }).length;
-    
-    const recentBonus = Math.min(20, Math.round((recentPractice / totalSections) * 20));
+    // Bonus for recent practice
+    const recentBonus = Math.min(20, Math.round((recentPracticeCount / totalSections) * 20));
     retention = Math.min(100, retention + recentBonus);
 
-    // Penalty for stale practice (no practice in 30+ days)
-    const staleSections = sections.filter(s => {
-      if (!s.last_practiced_at) return true; // Never practiced
-      const daysAgo = differenceInDays(new Date(), parseISO(s.last_practiced_at));
-      return daysAgo > 30;
-    }).length;
-    
-    const stalePenalty = Math.round((staleSections / totalSections) * 30);
+    // Penalty for stale practice
+    const stalePenalty = Math.round((staleSectionsCount / totalSections) * 30);
     retention = Math.max(0, retention - stalePenalty);
 
     return Math.max(0, Math.min(100, retention));

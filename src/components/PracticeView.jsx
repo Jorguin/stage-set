@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { parseLine } from '../utils/musicLogic';
 import { calculateRetentionFromProgress } from '../utils/spacedRepetition';
+import { parseSections, getSectionKey } from '../utils/songSections';
 import { ArrowLeft, Minus, Plus, RefreshCw, Settings, X, CheckSquare, Target, ChevronLeft, ChevronRight, Brain } from 'lucide-react';
 
 export default function PracticeView() {
@@ -21,36 +22,6 @@ export default function PracticeView() {
 
   const scrollRef = useRef(null);
   const practiceSessionRef = useRef(null);
-
-  // Parse sections from song content
-  const parseSections = useCallback((content) => {
-    if (!content) return [];
-    const lines = content.split('\n');
-    const sections = [];
-    // English + Spanish section names - comprehensive list (longest first for regex priority)
-    const sectionNames = [
-      'Primera Parte', 'Segunda Parte', 'Tercera Parte', 'Cuarta Parte',
-      'Pre-Estribillo', 'PreEstribillo', 'Estribillo', 'Pre-Coro', 'PreCoro', 'Pre Coro', 'Coro',
-      'Pre-Chorus', 'PreChorus', 'Pre Chorus', 'Chorus',
-      'Verse', 'Bridge', 'Intro', 'Outro', 'Solo', 'Interlude', 'Tag', 'Ending',
-      'Pre-Verse', 'PreVerse', 'Puente', 'Interludio', 'Final', 'Verso',
-      'Refrain', 'Hook', 'Breakdown', 'Build', 'Drop', 'Vamp', 'Coda'
-    ];
-    // Match section markers anywhere: [Verse], [Verse 1], [Segunda Parte], [Estribillo 2], etc.
-    // Allows optional space + word + optional digits: "Segunda Parte 1", "Chorus 2"
-    const pattern = new RegExp(`\\[(${sectionNames.join('|')})(?:\\s+\\w+)?\\s*\\d*\\]`, 'i');
-    lines.forEach((line, index) => {
-      const match = line.match(pattern);
-      if (match) {
-        sections.push({
-          name: match[1],
-          lineIndex: index,
-          originalLine: line
-        });
-      }
-    });
-    return sections;
-  }, []);
 
   // Fetch song and section progress
   useEffect(() => {
@@ -82,7 +53,7 @@ export default function PracticeView() {
         const progressMap = {};
         if (progressData) {
           progressData.forEach(p => {
-            const key = `${p.section_name}-${p.section_order}`;
+            const key = getSectionKey({ name: p.section_name }, p.section_order);
             progressMap[key] = p;
           });
         }
@@ -99,8 +70,8 @@ export default function PracticeView() {
             song_id: id,
             user_id: user.id,
             total_sections: parsedSections.length,
-            sections_completed: parsedSections.filter(s => {
-              const key = `${s.name}-${parsedSections.indexOf(s)}`;
+            sections_completed: parsedSections.filter((s, index) => {
+              const key = getSectionKey(s, index);
               return progressMap[key]?.is_completed;
             }).length
           })
@@ -130,7 +101,7 @@ export default function PracticeView() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const key = `${section.name}-${sectionIndex}`;
+    const key = getSectionKey(section, sectionIndex);
     const currentProgress = sectionProgressRef.current[key];
     const newCompleted = !currentProgress?.is_completed;
 
