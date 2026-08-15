@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { parseLine } from '../utils/musicLogic';
+import { parseChordPro, transposeParsedSong, renderChordProForRole, getSongStructure } from '../services/chordProParser';
+import { useSectionAutoScroll, SectionProgressBar, SectionJumpButtons } from '../hooks/useSectionAutoScroll';
+import { RoleSelector, RoleBasedContent } from '../components/RoleBasedViews';
 import { ArrowLeft, Minus, Plus, Play, Pause, RefreshCw, FileText, Contrast, Zap, SkipBack, SkipForward, Settings, X, ChevronUp, ChevronDown } from 'lucide-react';
 
 export default function StageViewer() {
@@ -51,6 +53,12 @@ export default function StageViewer() {
   // Settings panel
   const [showSettings, setShowSettings] = useState(false);
   
+  // Role-based view
+  const [currentRole, setCurrentRole] = useState('guitar');
+  
+  // Parsed song data
+  const [parsedSong, setParsedSong] = useState(null);
+
   // Bottom controls visibility (mobile responsive)
   const [showBottomControls, setShowBottomControls] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -114,6 +122,40 @@ export default function StageViewer() {
     if (isMobile && isScrolling) setShowBottomControls(false);
   }, [isScrolling, isMobile]);
 
+  // Section-based auto-scroll
+  const {
+    scrollRef: sectionScrollRef,
+    isScrolling: sectionScrolling,
+    currentSectionIndex,
+    sectionProgress,
+    startAutoScroll: startSectionScroll,
+    stopAutoScroll: stopSectionScroll,
+    toggleScroll: toggleSectionScroll,
+    scrollToSection,
+    nextSection,
+    prevSection,
+    totalSections
+  } = useSectionAutoScroll({
+    parsedSong,
+    bpm,
+    timeSignature,
+    onSectionChange: (idx, section) => setActiveSectionIndex(idx),
+    onComplete: () => {
+      if (continuousMode && setlistSongs.length > 0 && currentSongIndex < setlistSongs.length - 1) {
+        setTimeout(() => {
+          const nextSong = setlistSongs[currentSongIndex + 1];
+          navigate(`/stage/${nextSong.id}`, { state: { setlist: setlistSongs } });
+        }, 3000);
+      }
+    }
+  });
+
+  // Combine refs
+  const combinedScrollRef = useCallback((node) => {
+    scrollRef.current = node;
+    sectionScrollRef(node);
+  }, [sectionScrollRef]);
+
   // Initialize from location state
   useEffect(() => {
     if (location.state?.setlist) {
@@ -156,16 +198,6 @@ const parseSections = useCallback((content) => {
     return sections;
   }, []);
 
-  const scrollToSection = useCallback((lineIndex) => {
-    if (scrollRef.current) {
-      const lineElements = scrollRef.current.querySelectorAll('[data-line-index]');
-      if (lineElements[lineIndex]) {
-        lineElements[lineIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setActiveSectionIndex(sections.findIndex(s => s.lineIndex === lineIndex));
-      }
-    }
-  }, [sections]);
-
   useEffect(() => {
     async function fetchSong() {
       try {
@@ -178,7 +210,17 @@ const parseSections = useCallback((content) => {
         if (error) throw error;
         setSong(data);
 
-        const parsedSections = parseSections(data.content);
+        // Parse with ChordPro parser
+        const parsed = parseChordPro(data.content);
+        const transposed = transposeParsedSong(parsed, semitones);
+        setParsedSong(transposed);
+        
+        // Also set sections in old format for compatibility
+        const parsedSections = transposed.sections.map(s => ({
+          name: s.name,
+          lineIndex: s.lineIndex,
+          originalLine: s.originalLine
+        }));
         setSections(parsedSections);
 
         // Fetch attachment URLs if they exist
@@ -193,18 +235,6 @@ const parseSections = useCallback((content) => {
         
         // Update last practiced
         await supabase.from('songs').update({ last_practiced: new Date().toISOString() }).eq('id', id);
-        
-        // Debug scroll dimensions after render
-        setTimeout(() => {
-          if (scrollRef.current) {
-            console.log('Song loaded - scroll dims:', {
-              scrollHeight: scrollRef.current.scrollHeight,
-              clientHeight: scrollRef.current.clientHeight,
-              maxScroll: scrollRef.current.scrollHeight - scrollRef.current.clientHeight,
-              durationMs: data.duration_ms
-            });
-          }
-        }, 100);
         
       } catch (error) {
         console.error('Error fetching song:', error);
@@ -550,23 +580,26 @@ const parseSections = useCallback((content) => {
           </div>
         </div>
 
-        {/* Section jump buttons */}
-        {sections.length > 0 && (
-          <div className="flex flex-wrap gap-1 justify-center pointer-events-auto md:order-3 md:w-full md:justify-center">
-            {sections.map((section, idx) => (
-              <button
-                key={idx}
-                onClick={() => scrollToSection(section.lineIndex)}
-                className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${activeSectionIndex === idx 
-                  ? 'bg-amber-400 text-black shadow-[0_0_10px_rgba(251,191,36,0.5)]' 
-                  : 'bg-panel text-gray-300 hover:bg-gray-700 hover:text-white'}`}
-                title={`Saltar a ${section.name}`}
-              >
-                {section.name.charAt(0)}
-              </button>
-            ))}
-          </div>
-        )}
+        {/* Role Selector + Section Progress */}
+        <div className="flex flex-col md:flex-row items-center gap-3 pointer-events-auto md:order-3 md:w-full md:justify-center">
+          <RoleSelector currentRole={currentRole} onChange={setCurrentRole} compact />
+          {totalSections > 0 && (
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <SectionProgressBar 
+                currentSectionIndex={currentSectionIndex} 
+                totalSections={totalSections} 
+                sectionProgress={sectionProgress}
+                sections={parsedSong?.sections}
+              />
+              <SectionJumpButtons 
+                sections={parsedSong?.sections || []} 
+                currentSectionIndex={currentSectionIndex} 
+                onJump={scrollToSection}
+                activeSection={activeSectionIndex}
+              />
+            </div>
+          )}
+        </div>
 
         <div className="flex items-center gap-2 pointer-events-auto md:order-2">
           {pdfUrl && (
@@ -728,41 +761,23 @@ const parseSections = useCallback((content) => {
 
       {/* Contenido (con ref para scroll) */}
       <div 
-        ref={scrollRef}
+        ref={combinedScrollRef}
         className="flex-1 overflow-y-auto pt-32 md:pt-48 pb-20 md:pb-64 px-4 md:px-12 lg:px-24"
-        style={{ scrollBehavior: isScrolling ? 'auto' : 'smooth' }}
+        style={{ scrollBehavior: (isScrolling || sectionScrolling) ? 'auto' : 'smooth' }}
       >
         <div className="max-w-4xl mx-auto space-y-6 min-h-[calc(100vh+100px)]">
-          {lines.map((line, lineIndex) => {
-            const parsed = parseLine(line, semitones);
-            
-            if (parsed.length === 1 && parsed[0].chord === '' && parsed[0].text.trim() === '') {
-              return <div key={lineIndex} className="h-6" data-line-index={lineIndex}></div>;
-            }
-
-            const isSection = sections.some(s => s.lineIndex === lineIndex);
-
-            return (
-              <div key={lineIndex} className={`flex flex-wrap relative mb-8 leading-relaxed ${isSection ? 'section-marker' : ''}`} data-line-index={lineIndex}>
-                {isSection && (
-                  <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-3 h-3 bg-amber-400 rounded-full hidden md:block" />
-                )}
-                {parsed.map((part, partIndex) => (
-                  <div key={partIndex} className="inline-flex flex-col relative mr-1 min-w-[0.5rem]">
-                    {/* RF2.1 Alineación Monoespaciada y Anclaje Vertical */}
-                    {part.chord && (
-                      <span className="text-amber-400 font-bold absolute -top-6 left-0 whitespace-nowrap text-lg">
-                        {part.chord}
-                      </span>
-                    )}
-                    <span className="text-xl whitespace-pre" style={{ fontSize: 'var(--stage-font-size, 16px)' }}>
-                      {part.text || ' '}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            );
-          })}
+          {parsedSong ? (
+            <RoleBasedContent 
+              parsedSong={parsedSong} 
+              role={currentRole} 
+              semitones={semitones}
+              fontSize={fontSize}
+            />
+          ) : (
+            <div className="text-center text-gray-500 py-20">
+              Cargando canción...
+            </div>
+          )}
         </div>
       </div>
 
@@ -822,6 +837,12 @@ const parseSections = useCallback((content) => {
             <div className="w-px h-12 bg-gray-700 hidden md:block"></div>
             <div className="h-px w-12 bg-gray-700 md:hidden"></div>
 
+            {/* Role Selector */}
+            <RoleSelector currentRole={currentRole} onChange={setCurrentRole} />
+
+            <div className="w-px h-12 bg-gray-700 hidden md:block"></div>
+            <div className="h-px w-12 bg-gray-700 md:hidden"></div>
+
             {/* Play/Pause */}
             <button
               onClick={toggleScroll}
@@ -841,6 +862,18 @@ const parseSections = useCallback((content) => {
                 <button onClick={() => currentSongIndex > 0 && navigate(`/stage/${setlistSongs[currentSongIndex - 1].id}`)} disabled={currentSongIndex === 0} className="w-12 h-12 flex items-center justify-center bg-[#1A1A20] rounded-xl hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Canción anterior"><SkipBack size={24} /></button>
                 <span className="text-xs font-mono text-gray-400 px-2">{currentSongIndex + 1} / {setlistSongs.length}</span>
                 <button onClick={() => currentSongIndex < setlistSongs.length - 1 && navigate(`/stage/${setlistSongs[currentSongIndex + 1].id}`)} disabled={currentSongIndex === setlistSongs.length - 1} className="w-12 h-12 flex items-center justify-center bg-[#1A1A20] rounded-xl hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Siguiente canción"><SkipForward size={24} /></button>
+              </div>
+            )}
+
+            <div className="w-px h-12 bg-gray-700 hidden md:block"></div>
+            <div className="h-px w-12 bg-gray-700 md:hidden"></div>
+
+            {/* Section Navigation */}
+            {totalSections > 1 && (
+              <div className="flex items-center gap-2">
+                <button onClick={prevSection} disabled={currentSectionIndex === 0} className="w-12 h-12 flex items-center justify-center bg-[#1A1A20] rounded-xl hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Sección anterior"><SkipBack size={24} /></button>
+                <span className="text-xs font-mono text-gray-400 px-2">{currentSectionIndex + 1} / {totalSections}</span>
+                <button onClick={nextSection} disabled={currentSectionIndex >= totalSections - 1} className="w-12 h-12 flex items-center justify-center bg-[#1A1A20] rounded-xl hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Siguiente sección"><SkipForward size={24} /></button>
               </div>
             )}
 
