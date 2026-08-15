@@ -100,6 +100,7 @@ export function alignChordsToLyrics(chords, lyricLine) {
   if (!words.length) return lyricLine;
   
   let result = '';
+  let lastEnd = 0;
   let wordIdx = 0;
   
   chords.forEach(({ chord, column }) => {
