@@ -738,19 +738,27 @@ export default function StageViewer() {
                   <div className="absolute -left-3 md:-left-4 top-1/2 -translate-y-1/2 w-2.5 md:w-3 h-2.5 md:h-3 bg-amber-400 rounded-full hidden sm:block" />
                 )}
                 <div className="chord-line-mobile relative">
-                  {parsed.map((part, partIndex) => (
-                    <span key={partIndex} className="relative inline-block">
-                      {/* RF2.1 Alineación Monoespaciada y Anclaje Vertical */}
-                      {part.chord && (
-                        <span className="text-amber-400 font-bold absolute -top-5 md:-top-6 left-0 whitespace-nowrap text-sm md:text-lg chord-mobile">
-                          {part.chord}
+                  {(() => {
+                    let charPos = 0;
+                    return parsed.map((part, partIndex) => {
+                      const partCharStart = charPos;
+                      charPos += (part.text || '').length;
+                      return (
+                        <span key={partIndex} className="relative inline-block">
+                          {/* RF2.1 Alineación Monoespaciada y Anclaje Vertical */}
+                          {part.chord && (
+                            <span className="text-amber-400 font-bold absolute -top-5 md:-top-6 whitespace-nowrap text-sm md:text-lg chord-mobile" 
+                                  style={{ left: `${partCharStart * 0.6}em` }}>
+                              {part.chord}
+                            </span>
+                          )}
+                          <span className="whitespace-pre-wrap block chord-line-mobile" style={{ fontSize: 'var(--stage-font-size, 16px)' }}>
+                            {part.text || '\u00A0'}
+                          </span>
                         </span>
-                      )}
-                      <span className="whitespace-pre-wrap block chord-line-mobile" style={{ fontSize: 'var(--stage-font-size, 16px)' }}>
-                        {part.text || '\u00A0'}
-                      </span>
-                    </span>
-                  ))}
+                      );
+                    });
+                  })()}
                 </div>
               </div>
             );

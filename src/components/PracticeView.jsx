@@ -336,18 +336,26 @@ export default function PracticeView() {
                     <span className="text-xs font-bold text-gray-400">{progressKey ? sectionProgress[progressKey]?.section_name : ''}</span>
                   </div>
                 )}
-                {parsed.map((part, partIndex) => (
-                  <div key={partIndex} className="inline-flex flex-col relative mr-1 min-w-[0.5rem]">
-                    {part.chord && (
-                      <span className="text-amber-400 font-bold absolute -top-6 left-0 whitespace-nowrap text-lg">
-                        {part.chord}
-                      </span>
-                    )}
-                    <span className="text-xl whitespace-pre" style={{ fontSize: 'var(--stage-font-size, 18px)' }}>
-                      {part.text || ' '}
-                    </span>
-                  </div>
-                ))}
+                {(() => {
+                    let charPos = 0;
+                    return parsed.map((part, partIndex) => {
+                      const partCharStart = charPos;
+                      charPos += (part.text || '').length;
+                      return (
+                        <div key={partIndex} className="inline-flex flex-col relative mr-1 min-w-[0.5rem]">
+                          {part.chord && (
+                            <span className="text-amber-400 font-bold absolute -top-6 whitespace-nowrap text-lg" 
+                                  style={{ left: `${partCharStart * 0.6}em` }}>
+                              {part.chord}
+                            </span>
+                          )}
+                          <span className="text-xl whitespace-pre" style={{ fontSize: 'var(--stage-font-size, 18px)' }}>
+                            {part.text || ' '}
+                          </span>
+                        </div>
+                      );
+                    });
+                  })()}
                 {/* Section completion button at end of section */}
                 {isSection && (
                   <button
