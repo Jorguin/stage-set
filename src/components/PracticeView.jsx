@@ -317,11 +317,8 @@ export default function PracticeView() {
         <div className="max-w-4xl mx-auto space-y-2 min-h-[calc(100vh+100px)]">
           {lines.map((line, lineIndex) => {
             const parsed = parseLine(line, semitones);
-            
-            // Skip section marker lines (used for navigation but not displayed)
-            if (isSectionMarker(line)) {
-              return null;
-            }
+            const isSection = isSectionMarker(line);
+            const sectionName = isSection ? getSectionName(line) : null;
             
             // Skip empty lines that are just whitespace
             if (parsed.length === 1 && parsed[0].chord === '' && parsed[0].text.trim() === '') {
@@ -337,19 +334,33 @@ export default function PracticeView() {
               return <div key={lineIndex} className="h-1" data-line-index={lineIndex}></div>;
             }
             
-            const isSection = sections.some(s => s.lineIndex === lineIndex);
             const sectionIndex = sections.findIndex(s => s.lineIndex === lineIndex);
-            const progressKey = sectionIndex >= 0 ? `${sections[sectionIndex].name}-${sectionIndex}` : null;
+            const sectionObj = sections[sectionIndex];
+            const progressKey = sectionIndex >= 0 ? `${sectionObj?.name}-${sectionIndex}` : null;
             const isCompleted = progressKey ? sectionProgress[progressKey]?.is_completed : false;
             
-            return (
-              <div key={lineIndex} className={`flex flex-wrap relative mb-3 leading-relaxed ${isSection ? 'section-marker' : ''}`} data-line-index={lineIndex} style={{ lineHeight: '1.5', fontSize: 'var(--stage-font-size, 18px)' }}>
-                {isSection && (
-                  <div className="absolute -left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 hidden md:block">
-                    <div className={`w-3 h-3 rounded-full ${isCompleted ? 'bg-green-500' : 'bg-amber-400'}`} />
-                    <span className="text-xs font-bold text-gray-400">{progressKey ? sectionProgress[progressKey]?.section_name : ''}</span>
+            // Section marker line - show as clickable badge
+            if (isSection) {
+              return (
+                <div key={lineIndex} className="relative mb-3 leading-relaxed" data-line-index={lineIndex} style={{ lineHeight: '1.5', fontSize: 'var(--stage-font-size, 18px)' }}>
+                  <div className="flex flex-wrap relative">
+                    <span 
+                      className="inline-flex items-center px-3 py-1.5 bg-amber-500/20 border border-amber-500/50 rounded-lg text-amber-300 font-bold text-sm uppercase tracking-wider cursor-pointer hover:bg-amber-500/30 transition-colors" 
+                      style={{ lineHeight: '1.5' }}
+                      onClick={() => sectionIndex >= 0 && toggleSection(sections[sectionIndex], sectionIndex)}
+                    >
+                      {sectionName}
+                      <span className={`ml-2 w-4 h-4 rounded-full ${isCompleted ? 'bg-green-500' : 'bg-gray-600'}`} />
+                    </span>
                   </div>
-                )}
+                </div>
+              );
+            }
+            
+            // Regular content line
+            const isSectionLine = sections.some(s => s.lineIndex === lineIndex);
+            return (
+              <div key={lineIndex} className={`flex flex-wrap relative mb-3 leading-relaxed ${isSectionLine ? 'section-marker' : ''}`} data-line-index={lineIndex} style={{ lineHeight: '1.5', fontSize: 'var(--stage-font-size, 18px)' }}>
                 {filteredParsed.map((part, partIndex) => (
                   <span key={partIndex} className="inline-flex items-baseline" style={{ lineHeight: '1.5' }}>
                     {part.chord && (
@@ -362,20 +373,6 @@ export default function PracticeView() {
                     </span>
                   </span>
                 ))}
-                {/* Section completion button at end of section */}
-                {isSection && (
-                  <button
-                    onClick={() => toggleSection(sections[sectionIndex], sectionIndex)}
-                    className="ml-4 flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium transition-all border-2 ${
-                      isCompleted 
-                        ? 'bg-green-500 text-white border-green-500' 
-                        : 'bg-gray-800 text-gray-400 border-gray-700 hover:border-amber-400'
-                    }"
-                  >
-                    {isCompleted ? <CheckSquare size={16} /> : <CheckSquare size={16} className="text-gray-600" />}
-                    <span>{isCompleted ? 'Completado' : 'Marcar'}</span>
-                  </button>
-                )}
               </div>
             );
           })}
