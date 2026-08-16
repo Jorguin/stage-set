@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { parseLine, parseSections } from '../utils/musicLogic';
+import { parseLine, parseSections, isSectionMarker } from '../utils/musicLogic';
 import { calculateRetentionFromProgress } from '../utils/spacedRepetition';
 import { getSectionKey } from '../utils/songSections';
 import { ArrowLeft, Minus, Plus, RefreshCw, Settings, X, CheckSquare, Target, ChevronLeft, ChevronRight, Brain } from 'lucide-react';
@@ -309,27 +309,41 @@ export default function PracticeView() {
         </div>
       )}
 
-      {/* Content */}
-      <div 
+<div 
         ref={scrollRef}
         className="flex-1 overflow-y-auto pt-32 md:pt-48 pb-64 px-4 md:px-12 lg:px-24"
         style={{ scrollBehavior: 'smooth' }}
       >
-        <div className="max-w-4xl mx-auto space-y-3 min-h-[calc(100vh+100px)]">
+        <div className="max-w-4xl mx-auto space-y-2 min-h-[calc(100vh+100px)]">
           {lines.map((line, lineIndex) => {
             const parsed = parseLine(line, semitones);
             
-            if (parsed.length === 1 && parsed[0].chord === '' && parsed[0].text.trim() === '') {
-              return <div key={lineIndex} className="h-3" data-line-index={lineIndex}></div>;
+            // Skip section marker lines (used for navigation but not displayed)
+            if (isSectionMarker(line)) {
+              return null;
             }
-
+            
+            // Skip empty lines that are just whitespace
+            if (parsed.length === 1 && parsed[0].chord === '' && parsed[0].text.trim() === '') {
+              return <div key={lineIndex} className="h-1" data-line-index={lineIndex}></div>;
+            }
+            
+            // Filter out parts that are just whitespace
+            const filteredParsed = parsed.filter(part => 
+              part.chord || part.text.trim() !== ''
+            );
+            
+            if (filteredParsed.length === 0) {
+              return <div key={lineIndex} className="h-1" data-line-index={lineIndex}></div>;
+            }
+            
             const isSection = sections.some(s => s.lineIndex === lineIndex);
             const sectionIndex = sections.findIndex(s => s.lineIndex === lineIndex);
             const progressKey = sectionIndex >= 0 ? `${sections[sectionIndex].name}-${sectionIndex}` : null;
             const isCompleted = progressKey ? sectionProgress[progressKey]?.is_completed : false;
-
+            
             return (
-              <div key={lineIndex} className={`flex flex-wrap relative mb-4 leading-snug ${isSection ? 'section-marker' : ''}`} data-line-index={lineIndex}>
+              <div key={lineIndex} className={`flex flex-wrap relative mb-3 leading-snug ${isSection ? 'section-marker' : ''}`} data-line-index={lineIndex}>
                 {isSection && (
                   <div className="absolute -left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 hidden md:block">
                     <div className={`w-3 h-3 rounded-full ${isCompleted ? 'bg-green-500' : 'bg-amber-400'}`} />

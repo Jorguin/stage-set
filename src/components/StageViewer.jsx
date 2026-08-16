@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { parseLine, parseSections } from '../utils/musicLogic';
+import { parseLine, parseSections, isSectionMarker } from '../utils/musicLogic';
 import { ArrowLeft, Minus, Plus, Play, Pause, RefreshCw, FileText, Contrast, Zap, SkipBack, SkipForward, Settings, X, ChevronUp, ChevronDown, Menu, Guitar } from 'lucide-react';
 
 export default function StageViewer() {
@@ -685,28 +685,38 @@ export default function StageViewer() {
       )}
 
       {/* Contenido (con ref para scroll) */}
-      <div 
+<div 
         ref={scrollRef}
         className="flex-1 overflow-y-auto pt-24 md:pt-32 lg:pt-40 pb-20 md:pb-40 lg:pb-64 px-3 md:px-4 lg:px-6 safe-area-bottom"
         style={{ scrollBehavior: isScrolling ? 'auto' : 'smooth' }}
       >
-        <div className="w-full mx-auto space-y-2 min-h-[calc(100vh+100px)] px-2 md:px-0">
+        <div className="w-full mx-auto space-y-1 min-h-[calc(100vh+100px)] px-2 md:px-0">
           {lines.map((line, lineIndex) => {
             const parsed = parseLine(line, semitones);
             
-            if (parsed.length === 1 && parsed[0].chord === '' && parsed[0].text.trim() === '') {
-              return <div key={lineIndex} className="h-2" data-line-index={lineIndex}></div>;
+            // Skip section marker lines (they're used for navigation but not displayed)
+            if (isSectionMarker(line)) {
+              return null;
             }
-
-            const isSection = sections.some(s => s.lineIndex === lineIndex);
-
+            
+            // Skip empty lines that are just whitespace
+            if (parsed.length === 1 && parsed[0].chord === '' && parsed[0].text.trim() === '') {
+              return <div key={lineIndex} className="h-1" data-line-index={lineIndex}></div>;
+            }
+            
+            // Filter out parts that are just whitespace (creates unwanted empty lines)
+            const filteredParsed = parsed.filter(part => 
+              part.chord || part.text.trim() !== ''
+            );
+            
+            if (filteredParsed.length === 0) {
+              return <div key={lineIndex} className="h-1" data-line-index={lineIndex}></div>;
+            }
+            
             return (
-              <div key={lineIndex} className={`relative mb-3 leading-snug ${isSection ? 'section-marker' : ''}`} data-line-index={lineIndex}>
-                {isSection && (
-                  <div className="absolute -left-3 md:-left-4 top-1/2 -translate-y-1/2 w-2.5 md:w-3 h-2.5 md:h-3 bg-amber-400 rounded-full hidden sm:block" />
-                )}
+              <div key={lineIndex} className={`relative mb-2 leading-snug`} data-line-index={lineIndex}>
                 <div className="chord-line-mobile relative">
-                  {parsed.map((part, partIndex) => (
+                  {filteredParsed.map((part, partIndex) => (
                     <span key={partIndex} className="relative inline-block">
                       {/* RF2.1 Alineación Monoespaciada y Anclaje Vertical */}
                       {part.chord && (
