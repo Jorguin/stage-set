@@ -473,6 +473,16 @@ const { data: { user } } = await supabase.auth.getUser();
     }, 0);
   };
 
+  // Reset song form fields
+  const resetSongForm = () => {
+    setNewSongTitle('');
+    setNewSongContent('');
+    setNewSongDuration('03:30');
+    setMp3File(null);
+    setPdfFile(null);
+    setEditingSong(null);
+  };
+
   const handleAddSong = async (e) => {
     e.preventDefault();
     
@@ -1395,7 +1405,7 @@ const { data: { user } } = await supabase.auth.getUser();
         )}
       </div>
       {isSongModalOpen && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50 overflow-y-auto" onClick={() => setIsSongModalOpen(false)}>
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50 overflow-y-auto" onClick={() => { resetSongForm(); setIsSongModalOpen(false); }}>
           <div className="bg-panel rounded-3xl p-8 w-full max-w-2xl border border-gray-800 my-8" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
               <Mic2 className="text-amber-400" />
@@ -1490,7 +1500,7 @@ const { data: { user } } = await supabase.auth.getUser();
               <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-gray-800">
                 <button
                   type="button"
-                  onClick={() => setIsSongModalOpen(false)}
+                  onClick={() => { resetSongForm(); setIsSongModalOpen(false); }}
                   disabled={isUploading}
                   className="px-6 py-3 text-gray-400 hover:text-white font-medium transition-colors"
                 >
