@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { parseLine, parseSections, isSectionMarker } from '../utils/musicLogic';
+import { parseLine, parseSections, isSectionMarker, getSectionName } from '../utils/musicLogic';
 import { calculateRetentionFromProgress } from '../utils/spacedRepetition';
 import { getSectionKey } from '../utils/songSections';
 import { ArrowLeft, Minus, Plus, RefreshCw, Settings, X, CheckSquare, Target, ChevronLeft, ChevronRight, Brain } from 'lucide-react';
