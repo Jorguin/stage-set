@@ -204,7 +204,7 @@ export default function PracticeView() {
   const lines = song.content ? song.content.split('\n') : [];
 
   return (
-    <div className={`h-screen flex flex-col bg-stage text-white overflow-hidden relative font-mono ${highContrast ? 'high-contrast' : ''}`} style={{ '--stage-font-size': `${fontSize}px` }}>
+    <div className={`h-screen flex flex-col bg-stage text-white overflow-hidden overflow-x-hidden relative font-mono ${highContrast ? 'high-contrast' : ''}`} style={{ '--stage-font-size': `${fontSize}px` }}>
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-stage to-transparent z-20 flex flex-col md:flex-row md:items-center justify-between gap-3 pointer-events-none">
         <div className="flex items-center gap-2 pointer-events-auto">

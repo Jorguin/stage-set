@@ -460,7 +460,7 @@ export default function StageViewer() {
   const lines = song.content ? song.content.split('\n') : [];
 
   return (
-    <div className={`h-screen flex flex-col bg-stage text-white overflow-hidden relative font-mono ${highContrast ? 'high-contrast' : ''}`} style={{ '--stage-font-size': `${fontSize}px` }}>
+    <div className={`h-screen flex flex-col bg-stage text-white overflow-hidden overflow-x-hidden relative font-mono ${highContrast ? 'high-contrast' : ''}`} style={{ '--stage-font-size': `${fontSize}px` }}>
       {/* Metronome visual indicator at very top */}
       {showMetronome && (
         <div 
@@ -687,7 +687,7 @@ export default function StageViewer() {
       {/* Contenido (con ref para scroll) */}
 <div 
         ref={scrollRef}
-        className="flex-1 overflow-y-auto pt-24 md:pt-32 lg:pt-40 pb-20 md:pb-40 lg:pb-64 px-3 md:px-4 lg:px-6 safe-area-bottom"
+        className="flex-1 overflow-y-auto pt-24 md:pt-32 lg:pt-40 pb-28 md:pb-48 lg:pb-72 px-3 md:px-4 lg:px-6 safe-area-bottom"
         style={{ scrollBehavior: isScrolling ? 'auto' : 'smooth' }}
       >
         <div className="w-full mx-auto space-y-1 min-h-[calc(100vh+100px)] px-2 md:px-0">

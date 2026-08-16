@@ -913,7 +913,7 @@ const { data: { user } } = await supabase.auth.getUser();
   };
 
   return (
-    <div className="min-h-screen p-3 md:p-6 max-w-4xl mx-auto">
+    <div className="min-h-screen p-3 md:p-6 max-w-4xl mx-auto overflow-x-hidden">
       <header className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-2 tracking-wider">
