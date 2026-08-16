@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { parseLine, parseSections, isSectionMarker } from '../utils/musicLogic';
+import { parseLine, parseSections, isSectionMarker, getSectionName } from '../utils/musicLogic';
 import { ArrowLeft, Minus, Plus, Play, Pause, RefreshCw, FileText, Contrast, Zap, SkipBack, SkipForward, Settings, X, ChevronUp, ChevronDown, Menu, Guitar } from 'lucide-react';
 
 export default function StageViewer() {
@@ -693,11 +693,8 @@ export default function StageViewer() {
         <div className="w-full mx-auto space-y-1 min-h-[calc(100vh+100px)] px-2 md:px-0">
           {lines.map((line, lineIndex) => {
             const parsed = parseLine(line, semitones);
-            
-            // Skip section marker lines (they're used for navigation but not displayed)
-            if (isSectionMarker(line)) {
-              return null;
-            }
+            const isSection = isSectionMarker(line);
+            const sectionName = isSection ? getSectionName(line) : null;
             
             // Skip empty lines that are just whitespace
             if (parsed.length === 1 && parsed[0].chord === '' && parsed[0].text.trim() === '') {
@@ -713,6 +710,20 @@ export default function StageViewer() {
               return <div key={lineIndex} className="h-1" data-line-index={lineIndex}></div>;
             }
             
+            // Section marker line - show as highlighted badge without braces
+            if (isSection) {
+              return (
+                <div key={lineIndex} className="relative mb-2 leading-relaxed" data-line-index={lineIndex} style={{ lineHeight: '1.6', fontSize: 'var(--stage-font-size, 16px)' }}>
+                  <div className="chord-line-mobile relative">
+                    <span className="inline-flex items-center px-3 py-1.5 bg-amber-500/20 border border-amber-500/50 rounded-lg text-amber-300 font-bold text-sm md:text-base uppercase tracking-wider" style={{ lineHeight: '1.6' }}>
+                      {sectionName}
+                    </span>
+                  </div>
+                </div>
+              );
+            }
+            
+            // Regular content line
             return (
               <div key={lineIndex} className={`relative mb-2 leading-relaxed`} data-line-index={lineIndex} style={{ lineHeight: '1.6', fontSize: 'var(--stage-font-size, 16px)' }}>
                 <div className="chord-line-mobile relative">
