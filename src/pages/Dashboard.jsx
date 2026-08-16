@@ -46,6 +46,7 @@ export default function Dashboard() {
   const [deleteConfirm, setDeleteConfirm] = useState(null); // { type: 'song'|'event'|'band'|'attachment', id, name, songId? }
   const [openSongMenu, setOpenSongMenu] = useState(null);
   const [editingSong, setEditingSong] = useState(null);
+  const [editingEvent, setEditingEvent] = useState(null);
   const [retentionMap, setRetentionMap] = useState({});
   const songContentRef = useRef(null);
 
@@ -403,6 +404,17 @@ const { data: { user } } = await supabase.auth.getUser();
     }
   };
 
+  const handleEditEvent = (event) => {
+    setEditingEvent(event);
+    setNewEventTitle(event.title);
+    setNewEventDate(event.date.split('T')[0]);
+    setNewEventLocation(event.location || '');
+    setSelectedSongIds(
+      event.setlist_songs?.map(item => item.songs?.id).filter(Boolean) || []
+    );
+    setIsEventModalOpen(true);
+  };
+
   const handleDeleteAttachment = async () => {
     if (!deleteConfirm?.id || !deleteConfirm.songId) return;
 
@@ -649,44 +661,77 @@ const { data: { user } } = await supabase.auth.getUser();
     }
 
     try {
-      // 1. Crear Evento
-      const { data: eventData, error: eventError } = await supabase
-        .from('events')
-        .insert([{
-          band_id: activeBandId,
-          title: newEventTitle.trim(),
-          date: new Date(newEventDate).toISOString(),
-          location: newEventLocation.trim()
-        }])
-        .select()
-        .single();
+      if (editingEvent) {
+        // Update existing event
+        const { error: eventError } = await supabase
+          .from('events')
+          .update({
+            title: newEventTitle.trim(),
+            date: new Date(newEventDate).toISOString(),
+            location: newEventLocation.trim()
+          })
+          .eq('id', editingEvent.id);
 
-      if (eventError) throw eventError;
+        if (eventError) throw eventError;
 
-      // 2. Asociar Canciones al Setlist
-      if (selectedSongIds.length > 0) {
-        const setlistItems = selectedSongIds.map((songId, index) => ({
-          event_id: eventData.id,
-          song_id: songId,
-          sort_order: index + 1
-        }));
+        // Update setlist songs - delete existing and insert new
+        await supabase.from('setlist_songs').delete().eq('event_id', editingEvent.id);
 
-        const { error: setlistError } = await supabase
-          .from('setlist_songs')
-          .insert(setlistItems);
+        if (selectedSongIds.length > 0) {
+          const setlistItems = selectedSongIds.map((songId, index) => ({
+            event_id: editingEvent.id,
+            song_id: songId,
+            sort_order: index + 1
+          }));
 
-        if (setlistError) throw setlistError;
+          const { error: setlistError } = await supabase
+            .from('setlist_songs')
+            .insert(setlistItems);
+
+          if (setlistError) throw setlistError;
+        }
+
+      } else {
+        // Create new event
+        const { data: eventData, error: eventError } = await supabase
+          .from('events')
+          .insert([{
+            band_id: activeBandId,
+            title: newEventTitle.trim(),
+            date: new Date(newEventDate).toISOString(),
+            location: newEventLocation.trim()
+          }])
+          .select()
+          .single();
+
+        if (eventError) throw eventError;
+
+        // Asociar Canciones al Setlist
+        if (selectedSongIds.length > 0) {
+          const setlistItems = selectedSongIds.map((songId, index) => ({
+            event_id: eventData.id,
+            song_id: songId,
+            sort_order: index + 1
+          }));
+
+          const { error: setlistError } = await supabase
+            .from('setlist_songs')
+            .insert(setlistItems);
+
+          if (setlistError) throw setlistError;
+        }
       }
 
       setIsEventModalOpen(false);
+      setEditingEvent(null);
       setNewEventTitle('');
       setNewEventDate('');
       setNewEventLocation('');
       setSelectedSongIds([]);
       fetchEvents(activeBandId);
     } catch (error) {
-      console.error('Error creating event:', error);
-      alert(`Error al crear el setlist/evento: ${error.message}`);
+      console.error(editingEvent ? 'Error updating event:' : 'Error creating event:', error);
+      alert(`Error al ${editingEvent ? 'actualizar' : 'crear'} el setlist/evento: ${error.message}`);
     }
   };
 
@@ -1130,42 +1175,51 @@ const { data: { user } } = await supabase.auth.getUser();
                           </div>
                         </div>
 
-                        {firstSongId && (
-                          <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto flex-wrap">
-                            <div className="flex items-center gap-3 flex-1 min-w-0 flex-wrap">
-                              <button
-                                onClick={() => navigate(`/practice/setlist/${evt.id}`)}
-                                className="flex-1 sm:flex-none min-w-[160px] bg-green-500 text-black px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-600 transition-colors shadow-[0_0_15px_rgba(34,197,94,0.3)] text-sm"
-                              >
-                                <Target size={20} className="fill-black" />
-                                Practicar Setlist
-                              </button>
-                              <button
-                                onClick={() => handleEventClick(firstSongId, setlistSongs)}
-                                className="flex-1 sm:flex-none min-w-[160px] bg-amber-400 text-black px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-amber-500 transition-colors shadow-[0_0_15px_rgba(251,191,36,0.3)] text-sm"
-                              >
-                                <Play size={20} className="fill-black" />
-                                Iniciar Show
-                              </button>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <button
-                                onClick={() => handleShareEvent(evt.id, evt.title)}
-                                className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
-                                title="Compartir Setlist"
-                              >
-                                <Share2 size={20} />
-                              </button>
-                              <button
-                                onClick={() => confirmDelete('event', evt.id, evt.title)}
-                                className="p-3 bg-gray-800 rounded-xl text-gray-400 hover:text-red-400 hover:bg-gray-700 transition-colors"
-                                title="Eliminar Setlist"
-                              >
-                                <Trash2 size={20} />
-                              </button>
-                            </div>
+                        <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto flex-wrap">
+                          <div className="flex items-center gap-3 flex-1 min-w-0 flex-wrap">
+                            {firstSongId && (
+                              <>
+                                <button
+                                  onClick={() => navigate(`/practice/setlist/${evt.id}`)}
+                                  className="flex-1 sm:flex-none min-w-[160px] bg-green-500 text-black px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-600 transition-colors shadow-[0_0_15px_rgba(34,197,94,0.3)] text-sm"
+                                >
+                                  <Target size={20} className="fill-black" />
+                                  Practicar Setlist
+                                </button>
+                                <button
+                                  onClick={() => handleEventClick(firstSongId, setlistSongs)}
+                                  className="flex-1 sm:flex-none min-w-[160px] bg-amber-400 text-black px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-amber-500 transition-colors shadow-[0_0_15px_rgba(251,191,36,0.3)] text-sm"
+                                >
+                                  <Play size={20} className="fill-black" />
+                                  Iniciar Show
+                                </button>
+                              </>
+                            )}
                           </div>
-                        )}
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              onClick={() => handleShareEvent(evt.id, evt.title)}
+                              className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                              title="Compartir Setlist"
+                            >
+                              <Share2 size={20} />
+                            </button>
+                            <button
+                              onClick={() => confirmDelete('event', evt.id, evt.title)}
+                              className="p-3 bg-gray-800 rounded-xl text-gray-400 hover:text-red-400 hover:bg-gray-700 transition-colors"
+                              title="Eliminar Setlist"
+                            >
+                              <Trash2 size={20} />
+                            </button>
+                            <button
+                              onClick={() => handleEditEvent(evt)}
+                              className="p-3 bg-gray-800 rounded-xl text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+                              title="Editar Setlist"
+                            >
+                              <Edit size={20} />
+                            </button>
+                          </div>
+                        </div>
                       </div>
 
                       {/* Lista de Canciones del Setlist */}
@@ -1543,7 +1597,7 @@ const { data: { user } } = await supabase.auth.getUser();
           <div className="bg-panel rounded-3xl p-8 w-full max-w-2xl border border-gray-800 my-8">
             <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
               <Calendar className="text-amber-400" />
-              Nuevo Evento / Setlist
+              {editingEvent ? 'Editar Setlist' : 'Nuevo Evento / Setlist'}
             </h2>
             <form onSubmit={handleAddEvent} className="flex flex-col gap-5">
               <div>
@@ -1623,7 +1677,7 @@ const { data: { user } } = await supabase.auth.getUser();
                   type="submit"
                   className="bg-amber-400 text-black px-8 py-3 rounded-xl font-bold hover:bg-amber-500 transition-colors"
                 >
-                  Crear Setlist
+                  {editingEvent ? 'Actualizar Setlist' : 'Crear Setlist'}
                 </button>
 </div>
              </form>
