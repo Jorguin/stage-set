@@ -345,8 +345,8 @@ export default function PracticeView() {
                 <div key={lineIndex} className="relative mb-3 leading-relaxed" data-line-index={lineIndex} style={{ lineHeight: '1.5', fontSize: 'var(--stage-font-size, 18px)' }}>
                   <div className="flex flex-wrap relative">
                     <span 
-                      className="inline-flex items-center px-3 py-1.5 bg-amber-500/20 border border-amber-500/50 rounded-lg text-amber-300 font-bold text-sm uppercase tracking-wider cursor-pointer hover:bg-amber-500/30 transition-colors" 
-                      style={{ lineHeight: '1.5' }}
+                      className="inline-flex items-center px-3 py-1.5 bg-amber-500/20 border border-amber-500/50 rounded-lg text-amber-300 font-bold uppercase tracking-wider cursor-pointer hover:bg-amber-500/30 transition-colors" 
+                      style={{ lineHeight: '1.5', fontSize: 'var(--stage-font-size, 18px)' }}
                       onClick={() => sectionIndex >= 0 && toggleSection(sections[sectionIndex], sectionIndex)}
                     >
                       {sectionName}
@@ -363,11 +363,11 @@ export default function PracticeView() {
               <div key={lineIndex} className={`flex flex-wrap relative mb-3 leading-relaxed ${isSectionLine ? 'section-marker' : ''}`} data-line-index={lineIndex} style={{ lineHeight: '1.5', fontSize: 'var(--stage-font-size, 18px)' }}>
                 {filteredParsed.map((part, partIndex) => (
                   <span key={partIndex} className="inline-flex items-baseline" style={{ lineHeight: '1.5' }}>
-                    {part.chord && (
-                      <span className="text-amber-400 font-bold align-top text-sm whitespace-nowrap" style={{ verticalAlign: 'top', lineHeight: '1', marginBottom: '-0.4em' }}>
-                        {part.chord}
-                      </span>
-                    )}
+{part.chord && (
+                        <span className="text-amber-400 font-bold align-top whitespace-nowrap" style={{ verticalAlign: 'top', lineHeight: '1', marginBottom: '-0.4em', fontSize: 'var(--stage-font-size, 18px)' }}>
+                          {part.chord}
+                        </span>
+                      )}
                     <span className="whitespace-pre" style={{ lineHeight: '1.5' }}>
                       {part.text || ' '}
                     </span>

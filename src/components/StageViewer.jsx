@@ -715,7 +715,7 @@ export default function StageViewer() {
               return (
                 <div key={lineIndex} className="relative mb-2 leading-relaxed" data-line-index={lineIndex} style={{ lineHeight: '1.6', fontSize: 'var(--stage-font-size, 16px)' }}>
                   <div className="chord-line-mobile relative">
-                    <span className="inline-flex items-center px-3 py-1.5 bg-amber-500/20 border border-amber-500/50 rounded-lg text-amber-300 font-bold text-sm md:text-base uppercase tracking-wider" style={{ lineHeight: '1.6' }}>
+                    <span className="inline-flex items-center px-3 py-1.5 bg-amber-500/20 border border-amber-500/50 rounded-lg text-amber-300 font-bold uppercase tracking-wider" style={{ lineHeight: '1.6', fontSize: 'var(--stage-font-size, 16px)' }}>
                       {sectionName}
                     </span>
                   </div>
@@ -731,7 +731,7 @@ export default function StageViewer() {
                     <span key={partIndex} className="inline-flex items-baseline" style={{ lineHeight: '1.6' }}>
                       {/* Chord as inline element positioned above text using vertical-align */}
                       {part.chord && (
-                        <span className="text-amber-400 font-bold align-top text-xs md:text-sm whitespace-nowrap chord-mobile" style={{ verticalAlign: 'top', lineHeight: '1', marginBottom: '-0.5em' }}>
+                        <span className="text-amber-400 font-bold align-top whitespace-nowrap chord-mobile" style={{ verticalAlign: 'top', lineHeight: '1', marginBottom: '-0.5em', fontSize: 'var(--stage-font-size, 16px)' }}>
                           {part.chord}
                         </span>
                       )}
