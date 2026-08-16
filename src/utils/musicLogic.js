@@ -52,6 +52,7 @@ export function transposeChord(chord, semitones) {
 const SECTION_PATTERNS = [
   'intro', 'outro', 'verse', 'verso', 'chorus', 'coro', 'estribillo',
   'bridge', 'puente', 'pre-chorus', 'pre-chorus', 'precoro', 'pre-coro',
+  'post-chorus', 'post-coro', 'postcoro',
   'solo', 'interlude', 'interludio', 'tag', 'ending', 'final',
   'hook', 'refrain', 'breakdown', 'build', 'drop', 'vamp', 'coda',
   'primera parte', 'segunda parte', 'tercera parte', 'cuarta parte',
