@@ -48,7 +48,7 @@ export function transposeChord(chord, semitones) {
   return SCALE[newIndex] + suffix;
 }
 
-// Section markers in square brackets [Intro], [Chorus], [Verse], etc. (same format as chords)
+// Section markers in square brackets [Intro] or curly braces {Intro} (same format as chords)
 const SECTION_PATTERNS = [
   'intro', 'outro', 'verse', 'verso', 'chorus', 'coro', 'estribillo',
   'bridge', 'puente', 'pre-chorus', 'pre-chorus', 'precoro', 'pre-coro',
@@ -64,7 +64,8 @@ function escapeRegExp(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-const SECTION_REGEX = new RegExp(`^\\[(${SECTION_PATTERNS.map(escapeRegExp).join('|')})\\s*\\d*\\]`, 'i');
+// Match both [Section] and {Section} formats, with optional number suffix
+const SECTION_REGEX = new RegExp(`^[\\{\\[](${SECTION_PATTERNS.map(escapeRegExp).join('|')})\\s*\\d*[]}]`, 'i');
 
 /**
  * Check if a line is a section marker in curly braces
@@ -79,8 +80,8 @@ export function isSectionMarker(line) {
  */
 export function getSectionName(line) {
   const trimmed = line.trim();
-  // Match [SectionName] at start of line, optionally followed by other content
-  const match = trimmed.match(/^\[([^\]]+)\]/);
+  // Match [SectionName] or {SectionName} at start of line, optionally followed by other content
+  const match = trimmed.match(/^[\[\{]([^\}\]]+)[\]\}]/);
   return match ? match[1].trim() : null;
 }
 

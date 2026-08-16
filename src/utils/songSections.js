@@ -10,9 +10,9 @@ const SECTION_NAMES = [
   'Refrain', 'Hook', 'Breakdown', 'Build', 'Drop', 'Vamp', 'Coda'
 ];
 
-// Match section markers anywhere: [Verse], [Verse 1], [Segunda Parte], [Estribillo 2], etc.
+// Match section markers anywhere: [Verse], [Verse 1], {Verse}, {Verse 1}, [Segunda Parte], {Segunda Parte}, [Estribillo 2], etc.
 // Allows optional space + word + optional digits: "Segunda Parte 1", "Chorus 2"
-const SECTION_PATTERN = new RegExp(`\\[(${SECTION_NAMES.join('|')})(?:\\s+\\w+)?\\s*\\d*\\]`, 'i');
+const SECTION_PATTERN = new RegExp(`[\[\{]((${SECTION_NAMES.join('|')})(?:\\s+\\w+)?\\s*\\d*)[\]\}]`, 'i');
 
 /**
  * Parse all sections from song content
