@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { parseLine } from '../utils/musicLogic';
+import { parseLine, parseSections } from '../utils/musicLogic';
 import { ArrowLeft, Minus, Plus, Play, Pause, RefreshCw, FileText, Contrast, Zap, SkipBack, SkipForward, Settings, X, ChevronUp, ChevronDown, Menu, Guitar } from 'lucide-react';
 
 export default function StageViewer() {
@@ -128,30 +128,6 @@ export default function StageViewer() {
       }
     }
   }, [location.state, id]);
-
-  const parseSections = useCallback((content) => {
-    if (!content) return [];
-    const lines = content.split('\n');
-    const sections = [];
-    const sectionNames = [
-      'Verse', 'Chorus', 'Bridge', 'Intro', 'Outro', 'Pre-Chorus', 'Solo', 'Interlude', 'Tag', 'Ending',
-      'Primera Parte', 'Segunda Parte', 'Tercera Parte', 'Cuarta Parte',
-      'Pre-Estribillo', 'Estribillo', 'Pre-Coro', 'Coro',
-      'Puente', 'Interludio', 'Final', 'Verso'
-    ];
-    const pattern = new RegExp(`\\[(${sectionNames.join('|')})\\s*\\d*\\]`, 'i');
-    lines.forEach((line, index) => {
-      const match = line.match(pattern);
-      if (match) {
-        sections.push({
-          name: match[1],
-          lineIndex: index,
-          originalLine: line
-        });
-      }
-    });
-    return sections;
-  }, []);
 
   const prevSection = useCallback(() => {
     if (currentSectionIndex > 0) {
@@ -498,32 +474,32 @@ export default function StageViewer() {
               {[...Array(parseInt(timeSignature.split('/')[0]) || 4)].map((_, i) => (
                 <div 
                   key={i}
-                  className="flex-1 h-3 relative min-w-0"
+                  className="flex-1 h-4 relative min-w-0"
                 >
                   <div 
                     className={`h-full rounded-sm transition-all duration-50 ${
                       i + 1 === currentBeat 
                         ? (metronomeFlash.show 
                             ? (metronomeFlash.accent 
-                                ? 'bg-amber-300 shadow-[0_0_8px_rgba(251,191,36,1)] scale-y-125' 
-                                : 'bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.7)] scale-y-115')
-                            : 'bg-amber-400 shadow-[0_0_4px_rgba(251,191,36,0.5)] scale-y-110')
+                                ? 'bg-amber-200 shadow-[0_0_12px_rgba(251,191,36,1)] scale-y-140' 
+                                : 'bg-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.9)] scale-y-130')
+                            : 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.7)] scale-y-120')
                         : 'bg-gray-700'
                     }`}
                     style={{ transformOrigin: 'bottom center' }}
                   />
                   {/* Beat number */}
-                  <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[7px] font-bold text-amber-400/70 whitespace-nowrap">
+                  <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[8px] font-bold text-amber-300 whitespace-nowrap">
                     {i + 1}
                   </span>
                 </div>
               ))}
             </div>
             
-            {/* Subtle full-bar flash on accent only */}
+            {/* Prominent full-bar flash on accent */}
             {metronomeFlash.show && metronomeFlash.accent && (
               <div 
-                className="absolute inset-0 bg-gradient-to-r from-amber-400/15 via-amber-300/5 to-amber-400/15 pointer-events-none animate-metronome-flash rounded-sm"
+                className="absolute inset-0 bg-gradient-to-r from-amber-300/40 via-amber-200/20 to-amber-300/40 pointer-events-none animate-metronome-flash rounded-sm"
               />
             )}
           </div>
@@ -560,14 +536,6 @@ export default function StageViewer() {
               <FileText size={24} />
             </a>
           )}
-          {/* Settings Button */}
-          <button
-            onClick={() => setShowSettingsModal(true)}
-            className="w-12 h-12 flex items-center justify-center bg-panel rounded-full text-white hover:text-amber-400 transition-colors shadow-lg"
-            title="Ajustes (Esc para cerrar)"
-          >
-            <Settings size={24} />
-          </button>
         </div>
       </div>
 
@@ -738,27 +706,19 @@ export default function StageViewer() {
                   <div className="absolute -left-3 md:-left-4 top-1/2 -translate-y-1/2 w-2.5 md:w-3 h-2.5 md:h-3 bg-amber-400 rounded-full hidden sm:block" />
                 )}
                 <div className="chord-line-mobile relative">
-                  {(() => {
-                    let charPos = 0;
-                    return parsed.map((part, partIndex) => {
-                      const partCharStart = charPos;
-                      charPos += (part.text || '').length;
-                      return (
-                        <span key={partIndex} className="relative inline-block">
-                          {/* RF2.1 Alineación Monoespaciada y Anclaje Vertical */}
-                          {part.chord && (
-                            <span className="text-amber-400 font-bold absolute -top-5 md:-top-6 whitespace-nowrap text-sm md:text-lg chord-mobile" 
-                                  style={{ left: `${partCharStart * 0.6}em` }}>
-                              {part.chord}
-                            </span>
-                          )}
-                          <span className="whitespace-pre-wrap block chord-line-mobile" style={{ fontSize: 'var(--stage-font-size, 16px)' }}>
-                            {part.text || '\u00A0'}
-                          </span>
+                  {parsed.map((part, partIndex) => (
+                    <span key={partIndex} className="relative inline-block">
+                      {/* RF2.1 Alineación Monoespaciada y Anclaje Vertical */}
+                      {part.chord && (
+                        <span className="text-amber-400 font-bold absolute -top-5 md:-top-6 left-0 whitespace-nowrap text-sm md:text-lg chord-mobile">
+                          {part.chord}
                         </span>
-                      );
-                    });
-                  })()}
+                      )}
+                      <span className="whitespace-pre-wrap block chord-line-mobile" style={{ fontSize: 'var(--stage-font-size, 16px)' }}>
+                        {part.text || '\u00A0'}
+                      </span>
+                    </span>
+                  ))}
                 </div>
               </div>
             );

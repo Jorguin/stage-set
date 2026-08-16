@@ -869,31 +869,31 @@ const { data: { user } } = await supabase.auth.getUser();
           <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-center md:justify-end">
             <button
               onClick={() => { setNewBandName(''); setIsBandModalOpen(true); }}
-              className="p-2 bg-[#1A1A20] rounded-xl text-gray-400 hover:text-white hover:bg-gray-700 transition-colors border border-gray-800"
+              className="flex-1 sm:flex-initial p-2 md:p-2 bg-[#1A1A20] rounded-xl text-gray-400 hover:text-white hover:bg-gray-700 transition-colors border border-gray-800 min-w-[40px]"
               title="Nuevo Proyecto/Banda"
             >
               <Plus size={20} />
             </button>
             {editingBandId ? (
-              <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+              <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto flex-1 sm:flex-initial">
                 <input
                   type="text"
                   value={editBandName}
                   onChange={(e) => setEditBandName(e.target.value)}
-                  className="bg-panel border border-amber-400 text-white rounded-xl px-3 py-2 text-sm focus:outline-none w-full sm:w-40"
+                  className="bg-panel border border-amber-400 text-white rounded-xl px-3 py-2 text-sm focus:outline-none w-full sm:w-40 flex-1"
                   autoFocus
                 />
-                <button onClick={handleUpdateBand} className="p-2 bg-amber-400 text-black rounded-xl hover:bg-amber-500" title="Guardar">
+                <button onClick={handleUpdateBand} className="p-2 bg-amber-400 text-black rounded-xl hover:bg-amber-500 min-w-[40px]" title="Guardar">
                   <Save size={16} />
                 </button>
-                <button onClick={cancelEditBand} className="p-2 bg-gray-700 text-gray-400 rounded-xl hover:bg-gray-600" title="Cancelar">
+                <button onClick={cancelEditBand} className="p-2 bg-gray-700 text-gray-400 rounded-xl hover:bg-gray-600 min-w-[40px]" title="Cancelar">
                   <X size={16} />
                 </button>
               </div>
             ) : bands.length > 1 && activeBandId && (
               <button
                 onClick={() => confirmDelete('band', activeBandId, bands.find(b => b.id === activeBandId)?.name)}
-                className="p-2 bg-[#1A1A20] rounded-xl text-gray-400 hover:text-red-400 hover:bg-gray-700 transition-colors border border-gray-800"
+                className="flex-1 sm:flex-initial p-2 bg-[#1A1A20] rounded-xl text-gray-400 hover:text-red-400 hover:bg-gray-700 transition-colors border border-gray-800 min-w-[40px]"
                 title="Eliminar Proyecto/Banda"
               >
                 <Trash2 size={20} />
@@ -901,7 +901,7 @@ const { data: { user } } = await supabase.auth.getUser();
             )}
             <button
               onClick={() => supabase.auth.signOut()}
-              className="p-2 bg-[#1A1A20] rounded-xl text-gray-400 hover:text-white transition-colors border border-gray-800"
+              className="flex-1 sm:flex-initial p-2 bg-[#1A1A20] rounded-xl text-gray-400 hover:text-white transition-colors border border-gray-800 min-w-[40px]"
               title="Cerrar Sesión"
             >
               <LogOut size={20} />

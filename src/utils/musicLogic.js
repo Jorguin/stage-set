@@ -16,7 +16,7 @@ function normalizeNote(note) {
 // Extrae la raíz y el sufijo de un acorde (ej. "C#m7" -> raíz "C#", sufijo "m7")
 function splitChord(chord) {
   const match = chord.match(/^([A-G][#b]?)(.*)$/);
-  if (!match) return { root: chord, suffix: '' }; // Si no hace match, devolvemos todo como raíz
+  if (!match) return { root: chord, suffix: '' };
   
   let root = match[1];
   let suffix = match[2];
@@ -37,17 +37,68 @@ export function transposeChord(chord, semitones) {
   
   const rootIndex = SCALE.indexOf(root);
   if (rootIndex === -1) {
-    // Si no es una nota válida, lo dejamos igual
     return chord;
   }
   
-  // Calcular el nuevo índice, manejando números negativos y manteniéndolo entre 0-11
   let newIndex = (rootIndex + semitones) % 12;
   if (newIndex < 0) {
     newIndex += 12;
   }
   
   return SCALE[newIndex] + suffix;
+}
+
+// Section markers in curly braces {Intro}, {Chorus}, {Verse}, etc.
+const SECTION_PATTERNS = [
+  'intro', 'outro', 'verse', 'verso', 'chorus', 'coro', 'estribillo',
+  'bridge', 'puente', 'pre-chorus', 'pre-chorus', 'precoro', 'pre-coro',
+  'solo', 'interlude', 'interludio', 'tag', 'ending', 'final',
+  'hook', 'refrain', 'breakdown', 'build', 'drop', 'vamp', 'coda',
+  'primera parte', 'segunda parte', 'tercera parte', 'cuarta parte',
+  'pre-estribillo', 'preestribillo',
+];
+
+const SECTION_REGEX = new RegExp(`^\\{(${SECTION_PATTERNS.join('|')})\\s*\\d*\\}$`, 'i');
+
+/**
+ * Check if a line is a section marker in curly braces
+ */
+export function isSectionMarker(line) {
+  const trimmed = line.trim();
+  return SECTION_REGEX.test(trimmed);
+}
+
+/**
+ * Extract section name from a section marker line
+ */
+export function getSectionName(line) {
+  const trimmed = line.trim();
+  const match = trimmed.match(/^\{(.+)\}$/);
+  return match ? match[1].trim() : null;
+}
+
+/**
+ * Parse all sections from song content
+ */
+export function parseSections(content) {
+  if (!content) return [];
+  const lines = content.split('\n');
+  const sections = [];
+  
+  lines.forEach((line, index) => {
+    if (isSectionMarker(line)) {
+      const name = getSectionName(line);
+      if (name) {
+        sections.push({
+          name,
+          lineIndex: index,
+          originalLine: line
+        });
+      }
+    }
+  });
+  
+  return sections;
 }
 
 export function parseLine(line, semitones = 0) {
