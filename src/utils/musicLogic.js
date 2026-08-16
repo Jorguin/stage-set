@@ -59,7 +59,12 @@ const SECTION_PATTERNS = [
   'pre-estribillo', 'preestribillo',
 ];
 
-const SECTION_REGEX = new RegExp(`^\\[(${SECTION_PATTERNS.join('|')})\\s*\\d*\\]`, 'i');
+// Escape special regex characters in patterns
+function escapeRegExp(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+const SECTION_REGEX = new RegExp(`^\\[(${SECTION_PATTERNS.map(escapeRegExp).join('|')})\\s*\\d*\\]`, 'i');
 
 /**
  * Check if a line is a section marker in curly braces
