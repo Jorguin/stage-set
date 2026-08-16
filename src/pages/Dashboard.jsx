@@ -5,6 +5,7 @@ import { calculateRetentionFromProgress } from '../utils/spacedRepetition';
 import { parseSections, getSectionKey } from '../utils/songSections';
 import { autoDetectChords, isAlreadyChordPro } from '../utils/chordParser';
 import { ChordPicker } from '../components/chord/ChordPicker';
+import { SongPartsPicker } from '../components/chord/SongPartsPicker';
 import { LogOut, Play, Plus, Calendar, Folder, Mic2, MapPin, CheckSquare, Square, Trash2, Music2, Users, Settings, X, ChevronDown, Save, Edit, Brain, Target, GripVertical, Share2, Zap } from 'lucide-react';
 
 export default function Dashboard() {
@@ -470,6 +471,22 @@ const { data: { user } } = await supabase.auth.getUser();
     setTimeout(() => {
       textarea.focus();
       textarea.setSelectionRange(start + chordText.length, start + chordText.length);
+    }, 0);
+  };
+
+  // Insert song part at cursor position
+  const insertPart = (partTag) => {
+    const textarea = songContentRef.current;
+    if (!textarea) return;
+    
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    
+    setNewSongContent(prev => prev.slice(0, start) + partTag + prev.slice(end));
+    
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + partTag.length, start + partTag.length);
     }, 0);
   };
 
@@ -1451,6 +1468,7 @@ const { data: { user } } = await supabase.auth.getUser();
                 />
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
                   <ChordPicker onInsertChord={insertChord} />
+                  <SongPartsPicker onInsertPart={insertPart} />
                   <button
                     type="button"
                     onClick={() => {

@@ -690,18 +690,18 @@ export default function StageViewer() {
         className="flex-1 overflow-y-auto pt-24 md:pt-32 lg:pt-40 pb-20 md:pb-40 lg:pb-64 px-3 md:px-4 lg:px-6 safe-area-bottom"
         style={{ scrollBehavior: isScrolling ? 'auto' : 'smooth' }}
       >
-        <div className="w-full mx-auto space-y-4 min-h-[calc(100vh+100px)] px-2 md:px-0">
+        <div className="w-full mx-auto space-y-2 min-h-[calc(100vh+100px)] px-2 md:px-0">
           {lines.map((line, lineIndex) => {
             const parsed = parseLine(line, semitones);
             
             if (parsed.length === 1 && parsed[0].chord === '' && parsed[0].text.trim() === '') {
-              return <div key={lineIndex} className="h-4" data-line-index={lineIndex}></div>;
+              return <div key={lineIndex} className="h-2" data-line-index={lineIndex}></div>;
             }
 
             const isSection = sections.some(s => s.lineIndex === lineIndex);
 
             return (
-              <div key={lineIndex} className={`relative mb-6 leading-relaxed ${isSection ? 'section-marker' : ''}`} data-line-index={lineIndex}>
+              <div key={lineIndex} className={`relative mb-3 leading-snug ${isSection ? 'section-marker' : ''}`} data-line-index={lineIndex}>
                 {isSection && (
                   <div className="absolute -left-3 md:-left-4 top-1/2 -translate-y-1/2 w-2.5 md:w-3 h-2.5 md:h-3 bg-amber-400 rounded-full hidden sm:block" />
                 )}
