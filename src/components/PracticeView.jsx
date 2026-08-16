@@ -343,24 +343,24 @@ export default function PracticeView() {
             const isCompleted = progressKey ? sectionProgress[progressKey]?.is_completed : false;
             
             return (
-              <div key={lineIndex} className={`flex flex-wrap relative mb-3 leading-snug ${isSection ? 'section-marker' : ''}`} data-line-index={lineIndex}>
+              <div key={lineIndex} className={`flex flex-wrap relative mb-3 leading-relaxed ${isSection ? 'section-marker' : ''}`} data-line-index={lineIndex} style={{ lineHeight: '1.5', fontSize: 'var(--stage-font-size, 18px)' }}>
                 {isSection && (
                   <div className="absolute -left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 hidden md:block">
                     <div className={`w-3 h-3 rounded-full ${isCompleted ? 'bg-green-500' : 'bg-amber-400'}`} />
                     <span className="text-xs font-bold text-gray-400">{progressKey ? sectionProgress[progressKey]?.section_name : ''}</span>
                   </div>
                 )}
-                {parsed.map((part, partIndex) => (
-                  <div key={partIndex} className="inline-flex flex-col relative mr-1 min-w-[0.5rem]">
+                {filteredParsed.map((part, partIndex) => (
+                  <span key={partIndex} className="inline-flex items-baseline" style={{ lineHeight: '1.5' }}>
                     {part.chord && (
-                      <span className="text-amber-400 font-bold absolute -top-6 left-0 whitespace-nowrap text-lg">
+                      <span className="text-amber-400 font-bold align-top text-sm whitespace-nowrap" style={{ verticalAlign: 'top', lineHeight: '1', marginBottom: '-0.4em' }}>
                         {part.chord}
                       </span>
                     )}
-                    <span className="text-xl whitespace-pre" style={{ fontSize: 'var(--stage-font-size, 18px)' }}>
+                    <span className="whitespace-pre" style={{ lineHeight: '1.5' }}>
                       {part.text || ' '}
                     </span>
-                  </div>
+                  </span>
                 ))}
                 {/* Section completion button at end of section */}
                 {isSection && (

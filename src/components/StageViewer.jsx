@@ -714,17 +714,17 @@ export default function StageViewer() {
             }
             
             return (
-              <div key={lineIndex} className={`relative mb-2 leading-snug`} data-line-index={lineIndex}>
-                <div className="chord-line-mobile relative flex flex-wrap items-start gap-1">
+              <div key={lineIndex} className={`relative mb-2 leading-relaxed`} data-line-index={lineIndex} style={{ lineHeight: '1.6', fontSize: 'var(--stage-font-size, 16px)' }}>
+                <div className="chord-line-mobile relative">
                   {filteredParsed.map((part, partIndex) => (
-                    <span key={partIndex} className="relative inline-flex flex-col items-start">
-                      {/* RF2.1 Alineación Monoespaciada y Anclaje Vertical - Acorde sobre su texto */}
+                    <span key={partIndex} className="inline-flex items-baseline" style={{ lineHeight: '1.6' }}>
+                      {/* Chord as inline element positioned above text using vertical-align */}
                       {part.chord && (
-                        <span className="text-amber-400 font-bold absolute -top-5 md:-top-6 left-0 whitespace-nowrap text-sm md:text-lg chord-mobile">
+                        <span className="text-amber-400 font-bold align-top text-xs md:text-sm whitespace-nowrap chord-mobile" style={{ verticalAlign: 'top', lineHeight: '1', marginBottom: '-0.5em' }}>
                           {part.chord}
                         </span>
                       )}
-                      <span className="whitespace-pre-wrap block chord-line-mobile pt-6" style={{ fontSize: 'var(--stage-font-size, 16px)' }}>
+                      <span className="whitespace-pre-wrap" style={{ lineHeight: '1.6' }}>
                         {part.text || '\u00A0'}
                       </span>
                     </span>
