@@ -1044,7 +1044,7 @@ const { data: { user } } = await supabase.auth.getUser();
                       key={song.id} 
                       className="bg-[#1A1A20] p-5 rounded-2xl flex items-center justify-between hover:bg-[#22222A] transition-colors border border-transparent hover:border-gray-700 group relative"
                     >
-                      <div className="flex-1 mr-6 min-w-0">
+                      <div className="flex-1 min-w-0 mr-4">
                         <div className="flex items-center gap-3">
                           <h3 className="font-bold text-white text-lg truncate">{song.title}</h3>
                           {(song.mp3_url || song.pdf_url) && (
@@ -1056,8 +1056,8 @@ const { data: { user } } = await supabase.auth.getUser();
                         
                         <div className="mt-3">
                           <div className="flex justify-between text-xs mb-1 font-mono">
-                            <span className="text-gray-400">Retención de Memoria</span>
-                            <span className="text-white">{retention}% (Lvl {song.mastery_level})</span>
+                            <span className="text-gray-400 truncate">Retención de Memoria</span>
+                            <span className="text-white flex-shrink-0">{retention}% (Lvl {song.mastery_level})</span>
                           </div>
                           <div className="w-full h-2 bg-black rounded-full overflow-hidden">
                             <div className={`h-full ${barColor} transition-all duration-1000`} style={{ width: `${retention}%` }}></div>
@@ -1066,7 +1066,7 @@ const { data: { user } } = await supabase.auth.getUser();
                       </div>
                       
                       {/* Action buttons */}
-                      <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="flex items-center gap-2 flex-shrink-0 shrink-0">
                         {/* Stage mode button */}
                         <button
                           onClick={() => navigate(`/stage/${song.id}`)}
