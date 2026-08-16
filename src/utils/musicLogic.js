@@ -48,7 +48,7 @@ export function transposeChord(chord, semitones) {
   return SCALE[newIndex] + suffix;
 }
 
-// Section markers in curly braces {Intro}, {Chorus}, {Verse}, etc.
+// Section markers in square brackets [Intro], [Chorus], [Verse], etc. (same format as chords)
 const SECTION_PATTERNS = [
   'intro', 'outro', 'verse', 'verso', 'chorus', 'coro', 'estribillo',
   'bridge', 'puente', 'pre-chorus', 'pre-chorus', 'precoro', 'pre-coro',
@@ -58,7 +58,7 @@ const SECTION_PATTERNS = [
   'pre-estribillo', 'preestribillo',
 ];
 
-const SECTION_REGEX = new RegExp(`^\\{(${SECTION_PATTERNS.join('|')})\\s*\\d*\\}$`, 'i');
+const SECTION_REGEX = new RegExp(`^\\[(${SECTION_PATTERNS.join('|')})\\s*\\d*\\]$`, 'i');
 
 /**
  * Check if a line is a section marker in curly braces
@@ -73,7 +73,7 @@ export function isSectionMarker(line) {
  */
 export function getSectionName(line) {
   const trimmed = line.trim();
-  const match = trimmed.match(/^\{(.+)\}$/);
+  const match = trimmed.match(/^\[(.+)\]$/);
   return match ? match[1].trim() : null;
 }
 
