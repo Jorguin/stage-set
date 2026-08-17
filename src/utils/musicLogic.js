@@ -64,7 +64,7 @@ function escapeRegExp(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// Match both [Section] and {Section} formats, with optional number suffix
+// Match both [Section] and {Section} formats at start of line, with optional number suffix and trailing content
 const SECTION_REGEX = new RegExp(`^[\\{\\[](${SECTION_PATTERNS.map(escapeRegExp).join('|')})\\s*\\d*[]}]`, 'i');
 
 /**
