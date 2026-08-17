@@ -80,9 +80,12 @@ export function isSectionMarker(line) {
  */
 export function getSectionName(line) {
   const trimmed = line.trim();
-  // Match [SectionName] or {SectionName} anywhere in the line
+  // Match [SectionName] or {SectionName} anywhere in the line, with optional trailing content
   const match = trimmed.match(/[\(\{\[]]([^\)\}\]]+)[\)\]\}]/);
-  return match ? match[1].trim() : null;
+  if (match) return match[1].trim();
+  // Fallback: try to match just the opening bracket content
+  const fallbackMatch = trimmed.match(/[\(\{\[]]([^\]\}\)}]+)/);
+  return fallbackMatch ? fallbackMatch[1].trim() : null;
 }
 
 /**
