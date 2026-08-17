@@ -40,14 +40,10 @@ export async function calculateRetentionFromProgress(songId, userId) {
       return 0; // No sections detected = 0% retention
     }
 
-    // DEBUG: Log what we're working with
-    console.log('[calculateRetentionFromProgress] songId:', songId, 'totalSections:', totalSections);
-    console.log('[calculateRetentionFromProgress] allSections:', allSections.map(s => s.displayName));
-
     // Get section progress for this song/user from DB
     const { data: progressData } = await supabase
       .from('song_section_progress')
-      .select('section_name, section_order, is_completed, practice_count, last_practiced_at')
+      .select('section_name, section_order, is_completed')
       .eq('song_id', songId)
       .eq('user_id', userId);
 
@@ -60,66 +56,22 @@ export async function calculateRetentionFromProgress(songId, userId) {
       });
     }
 
-    // DEBUG: Log progress map
-    console.log('[calculateRetentionFromProgress] progressMap keys:', Object.keys(progressMap));
-
     // Count completed sections by checking each detected section against progress
     let completedSections = 0;
-    let recentPracticeCount = 0;
-    let staleSectionsCount = 0;
 
     allSections.forEach((section, index) => {
       const key = getSectionKey(section, index);
       const progress = progressMap[key];
       
-      console.log('[calculateRetentionFromProgress] Checking:', section.displayName, 'key:', key, 'progress:', progress);
-      
       if (progress?.is_completed) {
         completedSections++;
       }
-      
-      // Recent practice (last 7 days)
-      if (progress?.last_practiced_at) {
-        const daysAgo = differenceInDays(new Date(), parseISO(progress.last_practiced_at));
-        if (daysAgo <= 7) {
-          recentPracticeCount++;
-        }
-        // Stale practice (30+ days)
-        if (daysAgo > 30) {
-          staleSectionsCount++;
-        }
-      } else {
-        // Never practiced = stale
-        staleSectionsCount++;
-      }
     });
 
-    // Base retention from completion rate (using ALL detected sections)
-    let retention = Math.round((completedSections / totalSections) * 100);
+    // Simple percentage: (completed / total) * 100
+    const retention = Math.round((completedSections / totalSections) * 100);
 
-    // Bonus for recent practice
-    const recentBonus = Math.min(20, Math.round((recentPracticeCount / totalSections) * 20));
-    retention = Math.min(100, retention + recentBonus);
-
-    // Penalty for stale practice
-    const stalePenalty = Math.round((staleSectionsCount / totalSections) * 30);
-    retention = Math.max(0, retention - stalePenalty);
-
-    const finalRetention = Math.max(0, Math.min(100, retention));
-    
-    // DEBUG: Log final calculation
-    console.log('[calculateRetentionFromProgress] FINAL:', {
-      totalSections,
-      completedSections,
-      recentPracticeCount,
-      staleSectionsCount,
-      baseRetention: Math.round((completedSections / totalSections) * 100),
-      recentBonus,
-      stalePenalty,
-      finalRetention
-    });
-
-    return finalRetention;
+    return Math.max(0, Math.min(100, retention));
 
   } catch (error) {
     console.error('Error calculating retention from progress:', error);
