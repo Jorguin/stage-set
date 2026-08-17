@@ -1,5 +1,10 @@
 // Shared section parsing logic - used by PracticeView, Dashboard, spacedRepetition
 
+// Escape special regex characters
+function escapeRegExp(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 // English + Spanish section names - comprehensive list (longest first for regex priority)
 const SECTION_NAMES = [
   'Primera Parte', 'Segunda Parte', 'Tercera Parte', 'Cuarta Parte',
@@ -12,7 +17,7 @@ const SECTION_NAMES = [
 
 // Match section markers anywhere: [Verse], [Verse 1], {Verse}, {Verse 1}, [Segunda Parte], {Segunda Parte}, [Estribillo 2], etc.
 // Allows optional space + word + optional digits: "Segunda Parte 1", "Chorus 2"
-const SECTION_PATTERN = new RegExp(`[\(\{\[]]((${SECTION_NAMES.join('|')})(?:\\s+\\w+)?\\s*\\d*)[\)\]\}]`, 'i');
+const SECTION_PATTERN = new RegExp(`[\(\[\{]((${SECTION_NAMES.map(escapeRegExp).join('|')})(?:\\s+\\w+)?\\s*\\d*)[\)\}\]]`, 'i');
 
 /**
  * Parse all sections from song content
