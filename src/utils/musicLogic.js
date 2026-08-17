@@ -65,7 +65,7 @@ function escapeRegExp(str) {
 }
 
 // Match both [Section] and {Section} formats anywhere in the line, with optional number suffix
-const SECTION_REGEX = new RegExp(`[\\{\\[](${SECTION_PATTERNS.map(escapeRegExp).join('|')})\\s*\\d*[]}]`, 'i');
+const SECTION_REGEX = new RegExp(`[({\\[](${SECTION_PATTERNS.map(escapeRegExp).join('|')})\\s*\\d*[\\]\\}]`, 'i');
 
 /**
  * Check if a line is a section marker in curly braces
@@ -81,7 +81,7 @@ export function isSectionMarker(line) {
 export function getSectionName(line) {
   const trimmed = line.trim();
   // Match [SectionName] or {SectionName} anywhere in the line
-  const match = trimmed.match(/[\[\{]([^\}\]]+)[\]\}]/);
+  const match = trimmed.match(/[\(\{\[]]([^\)\}\]]+)[\)\]\}]/);
   return match ? match[1].trim() : null;
 }
 
