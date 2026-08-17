@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { parseLine, parseSections, isSectionMarker, getSectionName } from '../utils/musicLogic';
 import { calculateRetentionFromProgress } from '../utils/spacedRepetition';
 import { getSectionKey } from '../utils/songSections';
-import { ArrowLeft, Minus, Plus, RefreshCw, Settings, X, CheckSquare, Target, ChevronLeft, ChevronRight, Brain } from 'lucide-react';
+import { ArrowLeft, Minus, Plus, RefreshCw, Settings, X, CheckSquare, Target, ChevronLeft, ChevronRight, Brain, ChevronDown, ListMusic } from 'lucide-react';
 
 export default function PracticeView() {
   const { id } = useParams();
@@ -19,6 +19,7 @@ export default function PracticeView() {
   const [fontSize, setFontSize] = useState(18);
   const [highContrast, setHighContrast] = useState(false);
   const [retention, setRetention] = useState(0);
+  const [showSectionList, setShowSectionList] = useState(false);
 
   const scrollRef = useRef(null);
   const practiceSessionRef = useRef(null);
@@ -226,25 +227,68 @@ export default function PracticeView() {
           </div>
         </div>
 
-        {/* Section navigation */}
-        {sections.length > 0 && (
-          <div className="flex flex-wrap gap-1 justify-center pointer-events-auto md:order-3 md:w-full md:justify-center">
-            {sections.map((section, idx) => (
-              <button
-                key={idx}
-                onClick={() => goToSection(idx)}
-                className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${idx === activeSectionIndex 
-                  ? 'bg-amber-400 text-black shadow-[0_0_10px_rgba(251,191,36,0.5)]' 
-                  : sectionProgress[`${section.name}-${idx}`]?.is_completed
-                    ? 'bg-green-500 text-white' 
-                    : 'bg-panel text-gray-300 hover:bg-gray-700 hover:text-white'}`}
-                title={`Saltar a ${section.name}`}
-              >
-                {section.name.charAt(0)}
-              </button>
-            ))}
+        {/* Section Progress Panel & Navigation */}
+        <div className="pointer-events-auto md:order-3 md:w-full md:order-3">
+          {/* Section Progress Summary */}
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Progreso</span>
+            <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-green-500 transition-all duration-300" 
+                style={{ width: `${retention}%` }}
+              />
+            </div>
+            <span className={`text-sm font-bold monospace ${retention >= 80 ? 'text-green-500' : retention >= 40 ? 'text-amber-400' : 'text-red-500'}`} style={{ minWidth: '45px' }}>
+              {retention}%
+            </span>
           </div>
-        )}
+          
+          {/* Collapsible Section List */}
+          <div className="relative">
+            <button
+              onClick={() => setShowSectionList(!showSectionList)}
+              className="w-full flex items-center justify-between px-3 py-2 bg-amber-500/20 border border-amber-500/50 rounded-lg text-amber-300 font-semibold text-xs uppercase tracking-wider hover:bg-amber-500/30 transition-colors"
+            >
+              <span className="flex items-center gap-1">
+                <ListMusic size={12} />
+                Secciones ({sections.filter(s => sectionProgress[`${s.name}-${sections.indexOf(s)}`]?.is_completed).length}/{sections.length})
+              </span>
+              <ChevronDown className={`w-4 h-4 transition-transform ${showSectionList ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {showSectionList && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-panel rounded-xl border border-gray-700 shadow-2xl p-3 max-h-64 overflow-y-auto z-20 animate-slide-down">
+                <div className="space-y-1">
+                  {sections.map((section, idx) => {
+                    const progressKey = `${section.name}-${idx}`;
+                    const isCompleted = sectionProgress[progressKey]?.is_completed;
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => { goToSection(idx); toggleSection(sections[idx], idx); }}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-left ${
+                          isCompleted 
+                            ? 'bg-green-500/20 border-l-4 border-green-500 text-green-300' 
+                            : 'hover:bg-gray-800 text-gray-300'
+                        }`}
+                        style={{ lineHeight: '1.4' }}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className={`font-bold text-xs uppercase tracking-wider ${isCompleted ? 'text-green-400' : 'text-amber-400'}`}>
+                              {section.name}
+                            </span>
+                            <span className={`w-4 h-4 rounded-full flex-shrink-0 ${isCompleted ? 'bg-green-500' : 'bg-gray-600'}`} />
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
         <div className="flex items-center gap-2 pointer-events-auto md:order-2">
           <button
